@@ -2,7 +2,7 @@
 
 ## What You Have
 
-✅ **Snowflake Notebook:** `phase_0_baseline.ipynb` - Ready to import  
+✅ **Snowflake Notebook:** `pdf-ocr-with-position.ipynb` - Ready to import  
 ✅ **Sample PDF:** `Prot_000.pdf` - Clinical protocol document  
 ✅ **README:** Complete project documentation  
 
@@ -14,7 +14,7 @@
 1. Log into your Snowflake account
 2. Navigate to **Projects** → **Notebooks**
 3. Click **"+ Notebook"** → **"Import .ipynb file"**
-4. Upload `phase_0_baseline.ipynb`
+4. Upload `pdf-ocr-with-position.ipynb`
 
 **Option B: Snowsight**
 1. Go to **Worksheets** → **Projects** → **Notebooks**
@@ -139,5 +139,5 @@ A: Unlike AISQL/ParseDoc, this maintains **position data** and enables **precise
 
 ---
 
-**Ready?** Open `phase_0_baseline.ipynb` in Snowflake and let's go! 🚀
+**Ready?** Open `pdf-ocr-with-position.ipynb` in Snowflake and let's go! 🚀
 

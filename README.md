@@ -19,7 +19,7 @@ Based on Medpace's onsite discussions in London, the solution addresses:
 ```
 pdf-ocr-with-position/
 ├── README.md                    # This file
-├── phase_0_baseline.ipynb       # Phase 0: FCTO's baseline solution
+├── pdf-ocr-with-position.ipynb  # Phase 0: FCTO's baseline solution
 ├── Prot_000.pdf                 # Sample clinical protocol PDF
 └── (future phases...)
 ```
@@ -27,7 +27,7 @@ pdf-ocr-with-position/
 ## Incremental Development Phases
 
 ### ✅ Phase 0: Setup & Baseline (COMPLETE)
-**Notebook:** `phase_0_baseline.ipynb`
+**Notebook:** `pdf-ocr-with-position.ipynb`
 
 **What it does:**
 - Sets up Snowflake environment

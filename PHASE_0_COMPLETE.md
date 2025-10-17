@@ -3,7 +3,7 @@
 ## What Was Delivered
 
 ### 📓 Snowflake Notebook
-**File:** `phase_0_baseline.ipynb`
+**File:** `pdf-ocr-with-position.ipynb`
 
 A complete, production-ready Snowflake notebook with:
 - ✅ Environment setup (roles, permissions)
@@ -119,7 +119,7 @@ These are intentional gaps that future phases will address:
 ### What You Should Do Now
 
 1. **Import the notebook into Snowflake**
-   - Upload `phase_0_baseline.ipynb` to Snowflake Notebooks
+   - Upload `pdf-ocr-with-position.ipynb` to Snowflake Notebooks
 
 2. **Run all cells in order**
    - Takes ~5 minutes total
@@ -287,7 +287,7 @@ Much more useful than a giant string!
 
 ```
 pdf-ocr-with-position/
-├── phase_0_baseline.ipynb      # ⭐ Import this into Snowflake
+├── pdf-ocr-with-position.ipynb # ⭐ Import this into Snowflake
 ├── Prot_000.pdf                # Sample protocol PDF
 ├── README.md                   # Full project documentation
 ├── QUICKSTART.md               # How to get started in 3 steps
