@@ -6,7 +6,7 @@ This project demonstrates an **incremental solution** for extracting text from P
 
 ## Customer Requirements
 
-Based on Medpace's onsite discussions in London, the solution addresses:
+This solution addresses:
 
 1. ✅ **Document Intelligence - Positioning Capability**: Extract text with exact page coordinates
 2. ✅ **Citation & Traceability**: Answer "Where did this information come from?" with section-level precision
@@ -167,6 +167,6 @@ This is a proof-of-concept built incrementally. Each phase can be tested indepen
 ---
 
 **Built for Snowflake by:** Solution Engineering Team  
-**Customer:** Medpace (Clinical Trials)  
+**Use Case:** Clinical Trials & Pharmaceutical Document Intelligence  
 **Last Updated:** October 2025
 
