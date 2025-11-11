@@ -131,27 +131,41 @@ with col2:
             rel_width = ((citation['BBOX_X1'] - citation['BBOX_X0']) / citation['PAGE_WIDTH']) * 100
             rel_height = ((citation['BBOX_Y1'] - citation['BBOX_Y0']) / citation['PAGE_HEIGHT']) * 100
             
-            st.markdown(f"""
+            # Use HTML component with proper structure
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+            @keyframes pulse {{
+                0%, 100% {{ box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }}
+                50% {{ box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }}
+            }}
+            body {{
+                margin: 0;
+                padding: 0;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            }}
+            </style>
+            </head>
+            <body>
             <div style="position: relative; width: 100%; height: 800px; background: #f5f5f5; border: 2px solid #ddd;">
                 <div style="position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <strong>Page {citation['PAGE']}</strong>
                 </div>
                 
-                <!-- Simulated PDF content -->
                 <div style="position: absolute; top: 60px; left: 50px; right: 50px; bottom: 50px; background: white; padding: 40px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); overflow: auto;">
-                    <!-- Mock PDF content -->
                     <div style="margin-bottom: 20px; color: #666;">
                         <h3>CLINICAL PROTOCOL</h3>
                         <p>Study ABC-123-456</p>
                         <p style="margin-top: 30px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>
                     </div>
                     
-                    <!-- HIGHLIGHTED SECTION -->
                     <div style="position: relative; margin: 20px 0; padding: 15px; background: rgba(255, 255, 0, 0.3); border: 3px solid #ff9800; border-radius: 5px; animation: pulse 2s infinite;">
                         <div style="position: absolute; top: -25px; left: 0; background: #ff9800; color: white; padding: 5px 10px; border-radius: 3px; font-size: 12px;">
                             📍 MATCH FOUND
                         </div>
-                        <strong>{citation['TEXT'][:100]}...</strong>
+                        <strong>{citation['TEXT'][:100] if len(citation['TEXT']) > 100 else citation['TEXT']}</strong>
                     </div>
                     
                     <div style="margin-top: 20px; color: #666;">
@@ -159,14 +173,13 @@ with col2:
                     </div>
                 </div>
             </div>
+            </body>
+            </html>
+            """
             
-            <style>
-            @keyframes pulse {{
-                0%, 100% {{ box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }}
-                50% {{ box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }}
-            }}
-            </style>
-            """, unsafe_allow_html=True)
+            # Use components.html for better compatibility
+            import streamlit.components.v1 as components
+            components.html(html_content, height=850, scrolling=False)
             
             st.success("✅ Text automatically highlighted at exact location!")
             
