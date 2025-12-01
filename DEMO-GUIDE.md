@@ -49,11 +49,12 @@
 **Jump to:** Cell 4 (extraction intro)
 
 **YOU SAY:**
-> "Our Snowflake FCTO gave us this baseline - solid PDF extraction using pdfminer. We enhanced it with 3 critical additions..."
+> "The key to precise citations is capturing COMPLETE position data during extraction. Let me show you what we capture..."
 
-**SHOW:** The before/after comparison:
-- Before: `{'pos': (x, y), 'txt': '...'}`
-- After: Full page numbers, bounding boxes, dimensions
+**SHOW:** The extraction output format with:
+- Page numbers
+- Full bounding boxes [x0, y0, x1, y1]
+- Page dimensions (for relative positioning)
 
 **RUN:** Cell 7 (`test_extract`)
 
@@ -221,10 +222,11 @@
 - No external tools
 - **Why it matters:** Security, compliance, simplicity
 
-### 3. **Building on FCTO's Foundation** (mention 1-2 times)
-- Started with solid baseline
-- Added surgical enhancements
-- **Why it matters:** Shows partnership, not reinvention
+### 3. **Complete Snowflake-Native Stack** (mention 2-3 times)
+- Custom UDF for extraction (Python + pdfminer)
+- Cortex Search for semantic retrieval
+- Cortex Agent for orchestration (Claude 4 Sonnet)
+- **Why it matters:** Everything stays in Snowflake, zero external dependencies
 
 ### 4. **Production-Ready** (mention 2-3 times)
 - Not a POC

@@ -29,7 +29,7 @@ pdf-ocr-with-position/
 ## What's Included (Complete Solution)
 
 ### ✅ PDF Extraction with Position Tracking
-- Python UDF built on Snowflake FCTO's foundation
+- Custom Python UDF using pdfminer for robust PDF parsing
 - Extracts text with full bounding boxes [x0, y0, x1, y1]
 - Captures page numbers and page dimensions
 - Enables precise location citations
