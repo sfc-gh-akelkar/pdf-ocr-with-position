@@ -3,7 +3,7 @@
 ## 📋 Pre-Demo Checklist (5 mins before)
 
 ### ✅ Setup Requirements:
-1. **Notebook imported** - `demo-30min.ipynb` loaded in Snowflake
+1. **Notebook imported** - `pdf-ocr-with-position.ipynb` loaded in Snowflake
 2. **PDF uploaded** - `Prot_000.pdf` in `@PDF_STAGE`
 3. **Cells pre-run** - Run cells 1-16 BEFORE the demo (setup through agent creation)
 4. **Warehouse running** - `COMPUTE_WH` active
