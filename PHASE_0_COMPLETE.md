@@ -9,7 +9,7 @@ A complete, production-ready Snowflake notebook with:
 - ✅ Environment setup (roles, permissions)
 - ✅ Database and schema creation
 - ✅ PDF stage configuration
-- ✅ FCTO's baseline UDF implementation
+- ✅ Custom Python UDF for PDF extraction
 - ✅ Testing and validation queries
 - ✅ Markdown annotations explaining each step
 - ✅ Troubleshooting guide

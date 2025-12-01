@@ -20,7 +20,7 @@ Phase 0 (Baseline)           Phase 3 (Fonts)              Phase 6 (LLM + Citatio
 ## Phase 0: Baseline ✅ COMPLETE
 
 ### Deliverable
-- Snowflake notebook with FCTO's solution
+- Snowflake notebook with PDF extraction UDF
 - PDF stage and UDF deployed
 - Extraction works end-to-end
 
