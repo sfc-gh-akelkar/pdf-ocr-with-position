@@ -1,4 +1,4 @@
-# Quick Start Guide - Phase 0
+# Quick Start Guide
 
 ## What You Have
 
@@ -27,13 +27,13 @@
 **SnowSQL (Command Line):**
 ```bash
 snowsql -a <your_account> -u <your_username>
-USE DATABASE pdf_ocr_demo;
-USE SCHEMA public;
-PUT file:///Users/akelkar/src/Cursor/pdf-ocr-with-position/Prot_000.pdf @pdf AUTO_COMPRESS=FALSE;
+USE DATABASE SANDBOX;
+USE SCHEMA PDF_OCR;
+PUT file:///path/to/Prot_000.pdf @PDF_STAGE AUTO_COMPRESS=FALSE;
 ```
 
 **Snowflake Web UI:**
-1. Navigate to **Data** → **Databases** → **PDF_OCR_DEMO** → **PUBLIC** → **Stages** → **PDF**
+1. Navigate to **Data** → **Databases** → **SANDBOX** → **PDF_OCR** → **Stages** → **PDF_STAGE**
 2. Click **"+ Files"**
 3. Upload `Prot_000.pdf`
 
@@ -41,7 +41,7 @@ PUT file:///Users/akelkar/src/Cursor/pdf-ocr-with-position/Prot_000.pdf @pdf AUT
 ```python
 session.file.put(
     "Prot_000.pdf", 
-    "@pdf", 
+    "@PDF_STAGE", 
     auto_compress=False
 )
 ```
@@ -49,31 +49,45 @@ session.file.put(
 ### 3️⃣ Run the Notebook
 
 Execute each cell in order:
-1. ✅ Cell 1-4: Setup roles and permissions
-2. ✅ Cell 5-7: Create database/schema
-3. ✅ Cell 8-10: Create PDF stage
-4. ✅ Cell 11-13: Create the UDF (this takes ~30 seconds)
-5. ✅ Cell 14-15: Verify PDF upload
-6. ✅ Cell 16-17: **Test extraction** (this is the magic! 🎉)
-7. ✅ Cell 18-19: Analyze output
+
+**Part 1: Setup**
+- Cell 2: Environment setup (database, schema, stage)
+
+**Part 2: PDF Extraction**
+- Cell 4: Create the extraction UDF
+- Cell 6: Test extraction (see output with coordinates!)
+
+**Part 3: Storage**
+- Cell 8: Create table and load data
+- Cell 10: Query the structured data
+
+**Part 4: AI Layer**
+- Cell 12: Position calculator function
+- Cell 13: Cortex Search service
+- Cell 14: Agent tools
+- Cell 16: Create the Cortex Agent
+- Cells 18-22: Test the agent!
+
+**Part 5: Automation (Optional)**
+- Cell 24: Enable auto-processing
 
 ## Expected Results
 
-### After Cell 17 (Test Extraction):
+### After Test Extraction (Cell 6):
 You should see output like:
-```python
-[
-  {'pos': (54.0, 720.3), 'txt': 'CLINICAL PROTOCOL\n'}, 
-  {'pos': (72.0, 680.1), 'txt': 'Study Title: Phase III Study...\n'},
-  {'pos': (54.0, 650.2), 'txt': 'Protocol Number: ABC-123\n'},
-  ...
-]
+```
+| PAGE | TEXT_PREVIEW                                    | BBOX              |
+|------|------------------------------------------------|-------------------|
+| 1    | CLINICAL PROTOCOL                               | [54, 720, 200, 735] |
+| 1    | Study Title: Phase III Study...                | [72, 680, 500, 695] |
+| 1    | Protocol Number: ABC-123                       | [54, 650, 250, 665] |
 ```
 
-### After Cell 19 (Statistics):
+### After Agent Test (Cells 18-21):
+The agent will respond with precise citations:
 ```
-output_length_chars: ~500000
-output_length_kb: ~488
+According to Prot_000.pdf, Page 5 (top-right, [320, 680, 550, 720]), 
+the dosing schedule is BID for 28 days...
 ```
 
 ## Troubleshooting
@@ -82,42 +96,30 @@ output_length_kb: ~488
 ```sql
 -- Make sure you're ACCOUNTADMIN when running:
 USE ROLE accountadmin;
-GRANT DATABASE ROLE SNOWFLAKE.PYPI_REPOSITORY_USER TO ROLE sysadmin;
 ```
 
 ### "File Not Found" Error
 ```sql
 -- Verify your file is uploaded:
-LIST @pdf;
+LIST @PDF_STAGE;
 -- Should show: Prot_000.pdf
 ```
 
-### Function Takes Forever
+### Function Takes Too Long
 - Normal for first run (30-60 seconds for large PDFs)
 - Increase warehouse size if needed:
   ```sql
-  USE WAREHOUSE COMPUTE_WH;  -- or your warehouse
   ALTER WAREHOUSE COMPUTE_WH SET WAREHOUSE_SIZE = 'MEDIUM';
   ```
 
 ## What You'll Learn
 
-By the end of Phase 0, you'll understand:
-- ✅ How Snowflake UDFs process PDFs
+By running this notebook, you'll understand:
+- ✅ How Snowflake UDFs process PDFs with position data
 - ✅ How `pdfminer` extracts text with coordinates
-- ✅ The baseline data structure
-- ✅ Current limitations (no page numbers, sections, etc.)
-
-## After Phase 0
-
-Once you've successfully extracted text from `Prot_000.pdf`, you're ready for:
-
-**Phase 1:** Add page numbers and store in a table  
-**Phase 2:** Capture full bounding boxes  
-**Phase 3:** Detect fonts and headers  
-**Phase 4:** Build section hierarchy  
-**Phase 5:** Implement smart chunking  
-**Phase 6:** Add LLM Q&A with citations  
+- ✅ How Cortex Search enables semantic search
+- ✅ How Cortex Agent orchestrates tools for Q&A
+- ✅ How to get PRECISE citations (page + position + coordinates)
 
 ---
 
@@ -126,18 +128,17 @@ Once you've successfully extracted text from `Prot_000.pdf`, you're ready for:
 **Common Questions:**
 
 **Q: Can I use my own PDF?**  
-A: Yes! Upload any PDF to the `@pdf` stage and change `'Prot_000.pdf'` in the query.
+A: Yes! Upload any PDF to the `@PDF_STAGE` and change `'Prot_000.pdf'` in the queries.
 
 **Q: Why is the output so long?**  
 A: The UDF extracts EVERY text box with coordinates. A 100-page PDF might have 5,000+ text boxes.
 
 **Q: Is this production-ready?**  
-A: Phase 0 is a baseline. Future phases add the structure needed for production (tables, sections, LLM integration).
+A: Yes! The solution includes auto-processing for new PDFs and can be accessed via Snowflake Intelligence UI.
 
 **Q: How does this compare to other solutions?**  
-A: Unlike AISQL/ParseDoc, this maintains **position data** and enables **precise citations** - critical for GCP compliance.
+A: Unlike generic RAG tools, this maintains **position data** and enables **precise citations** - critical for GCP compliance in regulated industries.
 
 ---
 
 **Ready?** Open `pdf-ocr-with-position.ipynb` in Snowflake and let's go! 🚀
-

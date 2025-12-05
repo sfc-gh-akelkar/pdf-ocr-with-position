@@ -19,10 +19,10 @@ This solution addresses:
 ```
 pdf-ocr-with-position/
 ├── README.md                    # This file
-├── pdf-ocr-with-position.ipynb  # Complete solution notebook (27 cells, 30-min demo)
-├── DEMO-GUIDE.md                # Presentation guide with minute-by-minute script
+├── pdf-ocr-with-position.ipynb  # Complete solution notebook
+├── DEMO-GUIDE.md                # Presentation guide with talking points
 ├── QUICKSTART.md                # Quick setup instructions
-├── ROADMAP.md                   # Phase-by-phase development details
+├── PDF_SAMPLE_NOTE.md           # Sample PDF usage notes
 └── Prot_000.pdf                 # Sample clinical protocol PDF
 ```
 
@@ -142,7 +142,7 @@ WHERE page = 5 AND text ILIKE '%dosing%';
 
 ## Next Steps
 
-1. **Demo it:** Follow `DEMO-GUIDE.md` for 30-minute presentation
+1. **Demo it:** Follow `DEMO-GUIDE.md` for presentation talking points
 2. **Customize it:** Add your own agent tools or document types
 3. **Scale it:** Enable auto-processing for your entire protocol library
 4. **Deploy it:** Grant access via Snowflake Intelligence for end users

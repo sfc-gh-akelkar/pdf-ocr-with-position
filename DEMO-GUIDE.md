@@ -1,6 +1,6 @@
-# 30-Minute Demo Guide - Clinical Protocol Intelligence
+# Demo Guide - Clinical Protocol Intelligence
 
-## 📋 Pre-Demo Checklist (5 mins before)
+## 📋 Pre-Demo Checklist
 
 ### ✅ Setup Requirements:
 1. **Notebook imported** - `pdf-ocr-with-position.ipynb` loaded in Snowflake
@@ -14,7 +14,7 @@
 ### 🎯 What to Pre-Run (BEFORE customer arrives):
 - Cell 3: `setup` (environment)
 - Cell 5: `create_udf` (PDF extraction function)
-- Cell 9: `load_data` (load the PDF - takes ~30 seconds)
+- Cell 9: `load_data` (load the PDF)
 - Cell 13: `position_func` (position calculator)
 - Cell 14: `cortex_search` (Cortex Search service)
 - Cell 15: `agent_tools` (agent tools)
@@ -24,9 +24,9 @@
 
 ---
 
-## 🎬 Demo Flow (30 Minutes)
+## 🎬 Demo Flow
 
-### **Minutes 0-5: The Story**
+### **Part 1: The Story**
 
 **Start here:** Cell 1 (intro markdown)
 
@@ -44,7 +44,7 @@
 
 ---
 
-### **Minutes 5-8: PDF Extraction**
+### **Part 2: PDF Extraction**
 
 **Jump to:** Cell 4 (extraction intro)
 
@@ -64,11 +64,9 @@
 **WHEN RESULTS APPEAR:**
 > "See? Page number, text preview, and the full bounding box. This is what enables precise citations."
 
-**TIME CHECK:** Should be at minute 7-8
-
 ---
 
-### **Minutes 8-11: Structured Storage**
+### **Part 3: Structured Storage**
 
 **YOU SAY:**
 > "We load this into a Snowflake table - fully queryable, governed, and ready for AI."
@@ -80,11 +78,9 @@
 **YOU SAY:**
 > "Now it's not just raw PDF data - it's structured, queryable, and indexed. This feeds our AI layer."
 
-**TIME CHECK:** Should be at minute 10-11
-
 ---
 
-### **Minutes 11-14: AI Setup (Quick Overview)**
+### **Part 4: AI Setup (Quick Overview)**
 
 **Jump to:** Cell 12 (AI header)
 
@@ -101,11 +97,9 @@
 **YOU SAY:**
 > "All of this is already set up. Now watch what it can do..."
 
-**TIME CHECK:** Should be at minute 13-14
-
 ---
 
-### **Minutes 14-25: THE WOW - Agent Demo** 🎯
+### **Part 5: THE WOW - Agent Demo** 🎯
 
 **This is the money moment!** Slow down, let it breathe.
 
@@ -159,11 +153,9 @@
 
 **RUN 2-3 LIVE QUESTIONS**
 
-**TIME CHECK:** Should be at minute 24-25
-
 ---
 
-### **Minutes 25-28: The Value Prop**
+### **Part 6: The Value Prop**
 
 **Jump to:** Cell 26 (summary)
 
@@ -181,11 +173,9 @@
 **YOU SAY:**
 > "This is production-ready TODAY. No POC, no infrastructure setup."
 
-**TIME CHECK:** Should be at minute 27-28
-
 ---
 
-### **Minutes 28-30: The Finale**
+### **Part 7: The Finale**
 
 **OPEN NEW TAB:** Snowflake Intelligence UI
 
@@ -203,8 +193,6 @@
 > "This is what regulatory reviewers see. Clean chat interface, zero code. They type questions, get answers with citations. That's it."
 
 **ASK FOR QUESTIONS**
-
-**TIME CHECK:** Should be at minute 29-30
 
 ---
 
@@ -277,7 +265,6 @@
 **You nailed the demo if:**
 - ✅ Audience says "Wow!" when they see precise citations
 - ✅ Someone asks "Can we try this on our protocols?"
-- ✅ You finish with 2-3 minutes for Q&A
 - ✅ Non-technical stakeholders understand the value
 - ✅ Technical stakeholders are impressed by Snowflake-native approach
 
@@ -288,7 +275,7 @@
 ### If audience is:
 
 **Non-technical (regulatory, clinical reviewers):**
-- Spend MORE time on agent demo (minutes 14-25)
+- Spend MORE time on agent demo (Part 5)
 - Emphasize Snowflake Intelligence UI
 - Skip technical details of UDF, Cortex Search internals
 - Focus on precise citations and ease of use
@@ -313,8 +300,6 @@
 - [ ] PDF uploaded to stage
 - [ ] Warehouse running
 - [ ] Snowflake Intelligence UI tab open
-- [ ] Timer set for 30 minutes
 - [ ] Water nearby (you'll be talking a lot!)
 
 **Good luck! You've got this! 🚀**
-
