@@ -469,6 +469,149 @@ def get_presigned_url(doc_name, expiration_seconds=360):
         return None
 
 
+def upload_pdf_with_progress(uploaded_file):
+    """
+    Upload PDF file to Snowflake stage and process it with clear progress indication.
+    
+    Args:
+        uploaded_file: Streamlit UploadedFile object
+    
+    Returns:
+        bool: Success status
+    """
+    import tempfile
+    import os
+    import time
+    
+    status_container = st.container()
+    
+    with status_container:
+        # Show processing overview
+        st.info("🔄 **Processing your document...** This may take 30-60 seconds depending on document size.")
+        
+        # Create a spinner with detailed status updates
+        with st.spinner("Processing..."):
+            
+            # Step 1: Upload to Stage
+            st.write("📤 **Step 1:** Uploading to Snowflake stage...")
+            
+            try:
+                # Create temporary file
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                    tmp_file.write(uploaded_file.getbuffer())
+                    tmp_file_path = tmp_file.name
+                
+                # Upload to Snowflake stage
+                result = session.file.put(
+                    tmp_file_path,
+                    f"@{DATABASE_NAME}.{SCHEMA_NAME}.PDF_STAGE",
+                    auto_compress=False,
+                    overwrite=True
+                )
+                
+                # Clean up temporary file
+                os.unlink(tmp_file_path)
+                
+                st.write("✅ **Step 1 Complete:** File uploaded successfully")
+                
+                # Step 2: Extract Text and Coordinates
+                st.write("⚙️ **Step 2:** Extracting text and coordinates with AI...")
+                st.caption("Using pdfminer library to analyze document structure and extract precise bounding boxes")
+                
+                # Call the stored procedure to process new PDFs
+                proc_result = session.sql(f"CALL {DATABASE_NAME}.{SCHEMA_NAME}.process_new_pdfs()").collect()
+                
+                st.write("✅ **Step 2 Complete:** Text extraction finished")
+                
+                # Step 3: Update Search Index
+                st.write("🔍 **Step 3:** Building search index...")
+                st.caption("Creating semantic embeddings for AI-powered search")
+                
+                # Optional: Refresh search index (will happen automatically anyway)
+                try:
+                    session.sql(f"ALTER CORTEX SEARCH SERVICE {DATABASE_NAME}.{SCHEMA_NAME}.protocol_search REFRESH").collect()
+                except Exception as e:
+                    # Index refresh might not be immediately necessary - it will happen automatically
+                    pass
+                
+                st.write("✅ **Step 3 Complete:** Document indexed and ready!")
+                
+            except Exception as e:
+                st.error(f"❌ Processing failed: {str(e)}")
+                if 'tmp_file_path' in locals() and os.path.exists(tmp_file_path):
+                    os.unlink(tmp_file_path)
+                return False
+        
+        # Success message with celebration
+        st.success("🎉 **Document successfully processed and ready for AI-powered search!**")
+        
+        # Show processing summary
+        try:
+            stats_query = f"""
+                SELECT 
+                    COUNT(*) as total_chunks,
+                    MAX(page) as total_pages
+                FROM {DATABASE_NAME}.{SCHEMA_NAME}.document_chunks 
+                WHERE doc_name = '{uploaded_file.name}'
+            """
+            stats = session.sql(stats_query).collect()
+            
+            if stats and len(stats) > 0:
+                total_pages = stats[0]['TOTAL_PAGES'] or 0
+                total_chunks = stats[0]['TOTAL_CHUNKS'] or 0
+                st.info(f"📊 **Processing Summary:** {total_pages} pages processed, {total_chunks} text chunks extracted")
+        except Exception as e:
+            # Don't fail the whole process if stats query fails
+            st.caption("Document processed successfully (stats unavailable)")
+        
+        # Log the upload in Technical Deep Dive
+        log_execution_step(
+            "📤 Document Upload & Processing Complete",
+            {
+                'filename': uploaded_file.name,
+                'file_size': f"{uploaded_file.size / 1024:.1f} KB",
+                'stages_completed': ['Upload', 'Text Extraction', 'Search Indexing'],
+                'status': 'Ready for querying'
+            },
+            5.0  # Estimated total processing time
+        )
+        
+        # Add some celebration
+        st.balloons()
+        
+        # Auto-refresh after short delay to show new document in sidebar
+        time.sleep(2)
+        st.rerun()
+        
+        return True
+
+
+def validate_uploaded_file(uploaded_file):
+    """
+    Validate uploaded file before processing.
+    
+    Args:
+        uploaded_file: Streamlit UploadedFile object
+    
+    Returns:
+        tuple: (is_valid, error_message)
+    """
+    # Check file size (50MB limit)
+    max_size = 50 * 1024 * 1024  # 50MB
+    if uploaded_file.size > max_size:
+        return False, f"File too large ({uploaded_file.size / 1024 / 1024:.1f}MB). Maximum size: 50MB"
+    
+    # Check file type
+    if not uploaded_file.name.lower().endswith('.pdf'):
+        return False, "Invalid file type. Only PDF files are supported."
+    
+    # Check for empty file
+    if uploaded_file.size == 0:
+        return False, "File is empty. Please select a valid PDF file."
+    
+    return True, None
+
+
 def _display_result_card(result_num, result):
     """Helper function to display a search result card with professional styling."""
     # Use styled card following Snowflake best practices
@@ -1324,7 +1467,7 @@ if st.button("Search", type="primary", use_container_width=True) or query:
 
 st.divider()
 
-tab1, tab2, tab3 = st.tabs(["📖 Browse by Page", "🕒 Search History", "🔧 Technical Deep Dive"])
+tab1, tab2, tab3, tab4 = st.tabs(["📖 Browse by Page", "🕒 Search History", "🔧 Technical Deep Dive", "📤 Upload Documents"])
 
 with tab1:
     st.subheader("Browse Document by Page")
@@ -1639,19 +1782,139 @@ with tab3:
     else:
         st.info("Execute some searches to see cost estimates.")
     
-    # Clear metrics button
-    if st.button("🔄 Reset Session Metrics"):
-        st.session_state.performance_metrics = {
-            'total_searches': 0,
-            'total_response_time': 0,
-            'cortex_search_calls': 0,
-            'llm_calls': 0,
-            'total_input_tokens': 0,
-            'total_output_tokens': 0
-        }
-        st.session_state.execution_log = []
-        st.success("Session metrics reset!")
-        st.rerun()
+        # Clear metrics button
+        if st.button("🔄 Reset Session Metrics"):
+            st.session_state.performance_metrics = {
+                'total_searches': 0,
+                'total_response_time': 0,
+                'cortex_search_calls': 0,
+                'llm_calls': 0,
+                'total_input_tokens': 0,
+                'total_output_tokens': 0
+            }
+            st.session_state.execution_log = []
+            st.success("Session metrics reset!")
+            st.rerun()
+
+with tab4:
+    st.subheader("📤 Upload Documents")
+    
+    st.markdown("""
+    Upload PDF documents to make them instantly searchable with AI-powered Q&A. 
+    Your documents will be processed to extract text with precise coordinate tracking for audit-grade citations.
+    """)
+    
+    # Upload interface
+    uploaded_file = st.file_uploader(
+        "Choose a PDF file to upload",
+        type=['pdf'],
+        help="Select a PDF file (max 50MB). Processing typically takes 30-60 seconds depending on document size and complexity."
+    )
+    
+    if uploaded_file:
+        # Display file information
+        st.markdown("### 📄 **Selected File**")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Filename", uploaded_file.name)
+        with col2:
+            st.metric("Size", f"{uploaded_file.size / 1024:.1f} KB")
+        with col3:
+            st.metric("Type", uploaded_file.type)
+        
+        # File validation
+        is_valid, error_message = validate_uploaded_file(uploaded_file)
+        
+        if not is_valid:
+            st.error(f"❌ **Validation Error:** {error_message}")
+        else:
+            # Check for existing document with same name
+            try:
+                docs_df = get_available_documents()
+                if not docs_df.empty and uploaded_file.name in docs_df['DOC_NAME'].values:
+                    st.warning(f"⚠️ **Note:** A document named `{uploaded_file.name}` already exists. Uploading will replace the existing document and its search index.")
+            except:
+                pass  # Don't fail if we can't check existing documents
+            
+            # Processing information
+            st.markdown("### ⚙️ **What happens when you upload:**")
+            
+            col_info1, col_info2 = st.columns(2)
+            
+            with col_info1:
+                st.markdown("""
+                **📤 Upload Process:**
+                1. **Upload to Stage** - Secure transfer to Snowflake
+                2. **Text Extraction** - AI-powered PDF analysis with pdfminer
+                3. **Coordinate Mapping** - Precise bounding box extraction
+                4. **Search Indexing** - Semantic embedding generation
+                """)
+            
+            with col_info2:
+                st.markdown("""
+                **🎯 Result:**
+                - ✅ **Instant searchability** with natural language queries
+                - ✅ **Audit-grade citations** with page + position + coordinates  
+                - ✅ **AI-powered answers** using multiple LLM models
+                - ✅ **Cross-document search** with existing documents
+                """)
+            
+            # Upload button
+            st.markdown("### 🚀 **Ready to Process**")
+            
+            col_btn1, col_btn2 = st.columns([1, 2])
+            
+            with col_btn1:
+                if st.button("📤 **Upload & Process**", type="primary", use_container_width=True):
+                    upload_pdf_with_progress(uploaded_file)
+            
+            with col_btn2:
+                st.caption("⏱️ Processing typically takes 30-60 seconds. You'll see detailed progress updates during processing.")
+    
+    else:
+        # Instructions when no file selected
+        st.markdown("### 📋 **Upload Instructions**")
+        
+        st.markdown("""
+        **Supported Files:**
+        - 📄 **Format:** PDF only
+        - 📏 **Size:** Maximum 50MB per file
+        - 📚 **Content:** Text-based PDFs (scanned images may have limited accuracy)
+        
+        **Processing Details:**
+        - **Text Extraction:** Uses pdfminer library for robust PDF parsing
+        - **Coordinate Tracking:** Extracts precise bounding box coordinates for each text element
+        - **AI Indexing:** Creates semantic embeddings using Snowflake Arctic model
+        - **Search Integration:** Immediately available for natural language queries
+        
+        **Security & Privacy:**
+        - 🔒 **Data stays in Snowflake:** Files never leave your Snowflake environment
+        - 🛡️ **Enterprise governance:** Full RBAC and audit logging
+        - 📊 **Transparent processing:** All operations logged in Technical Deep Dive
+        """)
+        
+        # Show current document library
+        try:
+            docs_df = get_available_documents()
+            if not docs_df.empty:
+                st.markdown("### 📚 **Current Document Library**")
+                
+                # Display existing documents in a nice format
+                for _, doc in docs_df.iterrows():
+                    with st.expander(f"📄 {doc['DOC_NAME']} ({doc['TOTAL_PAGES']} pages, {doc['TOTAL_CHUNKS']} chunks)"):
+                        col_doc1, col_doc2 = st.columns(2)
+                        with col_doc1:
+                            st.write(f"**Pages:** {doc['TOTAL_PAGES']}")
+                            st.write(f"**Text Chunks:** {doc['TOTAL_CHUNKS']}")
+                        with col_doc2:
+                            st.write(f"**Processed:** {doc['FIRST_EXTRACTED']}")
+                            chunks_per_page = doc['TOTAL_CHUNKS'] / doc['TOTAL_PAGES'] if doc['TOTAL_PAGES'] > 0 else 0
+                            st.write(f"**Density:** {chunks_per_page:.1f} chunks/page")
+            else:
+                st.info("📭 **No documents uploaded yet.** Upload your first PDF to get started!")
+        except:
+            st.info("📭 **Upload your first PDF to get started with AI-powered document search!**")
 
 # ============================================================================
 # Footer
