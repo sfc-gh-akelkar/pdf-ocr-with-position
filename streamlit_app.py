@@ -219,6 +219,25 @@ def calculate_position_python(bbox_x0, bbox_y0, bbox_x1, bbox_y1, page_width, pa
         return "middle-center"
 
 
+def log_execution_step(step_name, details, execution_time=None, query_sql=None):
+    """Log execution steps for the technical deep dive."""
+    import time
+    
+    log_entry = {
+        'timestamp': time.time(),
+        'step': step_name,
+        'details': details,
+        'execution_time': execution_time,
+        'query_sql': query_sql
+    }
+    
+    st.session_state.execution_log.append(log_entry)
+    
+    # Keep only last 10 entries to avoid memory issues
+    if len(st.session_state.execution_log) > 10:
+        st.session_state.execution_log = st.session_state.execution_log[-10:]
+
+
 def search_protocols(query, max_results=10, doc_filter=None):
     """
     Search protocol documents using Cortex Search with Snowflake Core API.
@@ -246,7 +265,20 @@ def search_protocols(query, max_results=10, doc_filter=None):
     ]
     
     # Execute Cortex Search using Core API (cleaner than SQL approach)
+    import time
+    start_time = time.time()
+    
     try:
+        # Log the search initiation
+        search_details = {
+            'service': 'SANDBOX.PDF_OCR.protocol_search',
+            'method': 'cortex_search_service.search()',
+            'query': query,
+            'columns': columns,
+            'max_results': max_results,
+            'filter': doc_filter
+        }
+        
         if doc_filter:
             # Search with document filter
             filter_obj = {"@eq": {"doc_name": doc_filter}}
@@ -256,6 +288,7 @@ def search_protocols(query, max_results=10, doc_filter=None):
                 filter=filter_obj,
                 limit=max_results
             )
+            search_details['filter_applied'] = filter_obj
         else:
             # Search without filter
             response = cortex_search_service.search(
@@ -263,6 +296,11 @@ def search_protocols(query, max_results=10, doc_filter=None):
                 columns=columns,
                 limit=max_results
             )
+        
+        search_time = time.time() - start_time
+        
+        # Update performance metrics
+        st.session_state.performance_metrics['cortex_search_calls'] += 1
         
         # Parse response - response.json() returns a dict, not a string
         results_json = response.json()
@@ -274,8 +312,23 @@ def search_protocols(query, max_results=10, doc_filter=None):
         # Extract results array
         results_array = results_json.get('results', []) if isinstance(results_json, dict) else []
         
+        # Log successful search
+        search_details['results_count'] = len(results_array)
+        search_details['execution_time'] = search_time
+        
+        log_execution_step(
+            "🔍 Cortex Search Execution",
+            search_details,
+            search_time
+        )
+        
     except Exception as e:
-        # Return empty results with error info
+        # Log failed search
+        log_execution_step(
+            "❌ Cortex Search Error",
+            {'error': str(e), 'query': query},
+            time.time() - start_time
+        )
         st.error(f"Cortex Search API error: {str(e)}")
         return [], {"error": str(e), "results": []}
     
@@ -498,19 +551,64 @@ Do not mention "the CONTEXT" in your answer - write naturally as if you're an ex
 Answer:"""
     
     # Call Cortex AI Complete
+    import time
+    llm_start_time = time.time()
+    
     try:
+        # Log LLM call details
+        llm_details = {
+            'model': model_name,
+            'function': 'SNOWFLAKE.CORTEX.AI_COMPLETE',
+            'input_tokens': len(prompt.split()),  # Rough estimate
+            'context_chunks': len(search_results),
+            'prompt_length': len(prompt)
+        }
+        
         sql = """
             SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(?, ?) AS response
         """
         result = session.sql(sql, params=[model_name, prompt]).collect()
         
+        llm_time = time.time() - llm_start_time
+        
         if result:
             answer = result[0]['RESPONSE']
+            
+            # Update performance metrics
+            st.session_state.performance_metrics['llm_calls'] += 1
+            st.session_state.performance_metrics['total_input_tokens'] += llm_details['input_tokens']
+            st.session_state.performance_metrics['total_output_tokens'] += len(answer.split())
+            
+            # Log successful LLM call
+            llm_details.update({
+                'execution_time': llm_time,
+                'output_tokens': len(answer.split()),
+                'response_length': len(answer)
+            })
+            
+            log_execution_step(
+                "🤖 LLM Answer Synthesis",
+                llm_details,
+                llm_time,
+                f"SELECT SNOWFLAKE.CORTEX.AI_COMPLETE('{model_name}', '[PROMPT]') AS response"
+            )
+            
             return answer, citations
         else:
+            log_execution_step(
+                "❌ LLM Error",
+                {'error': 'No response from LLM', 'model': model_name},
+                llm_time
+            )
             return "Error: No response from LLM", citations
             
     except Exception as e:
+        llm_time = time.time() - llm_start_time
+        log_execution_step(
+            "❌ LLM Error",
+            {'error': str(e), 'model': model_name},
+            llm_time
+        )
         return f"Error synthesizing answer: {str(e)}", citations
 
 
@@ -529,6 +627,19 @@ if 'use_llm_synthesis' not in st.session_state:
 
 if 'selected_model' not in st.session_state:
     st.session_state.selected_model = 'claude-3-5-sonnet'
+
+if 'execution_log' not in st.session_state:
+    st.session_state.execution_log = []
+
+if 'performance_metrics' not in st.session_state:
+    st.session_state.performance_metrics = {
+        'total_searches': 0,
+        'total_response_time': 0,
+        'cortex_search_calls': 0,
+        'llm_calls': 0,
+        'total_input_tokens': 0,
+        'total_output_tokens': 0
+    }
 
 # ============================================================================
 # Sidebar - Document Browser
@@ -650,6 +761,9 @@ if st.button("Search", type="primary", use_container_width=True) or query:
     if query:
         with st.spinner("Searching protocols..."):
             try:
+                import time
+                search_start_time = time.time()
+                
                 # Filter by selected document if not "All Documents"
                 doc_filter = None if selected_doc == 'All Documents' else selected_doc
                 
@@ -665,11 +779,29 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                         else:
                             st.json(raw_response)
                 
+                # Update performance metrics
+                total_time = time.time() - search_start_time if 'search_start_time' in locals() else 0
+                st.session_state.performance_metrics['total_searches'] += 1
+                st.session_state.performance_metrics['total_response_time'] += total_time
+                
+                # Log UI rendering step
+                log_execution_step(
+                    "🎨 UI Rendering & Citation Formatting",
+                    {
+                        'results_displayed': len(results),
+                        'ai_synthesis_enabled': st.session_state.use_llm_synthesis,
+                        'citations_formatted': len(results),
+                        'total_response_time': total_time
+                    },
+                    0.1  # Estimated UI rendering time
+                )
+                
                 # Add to search history
                 st.session_state.search_history.insert(0, {
                     'query': query,
                     'results_count': len(results),
-                    'doc_filter': selected_doc
+                    'doc_filter': selected_doc,
+                    'total_time': total_time
                 })
                 
                 # Display results
@@ -812,7 +944,7 @@ if st.button("Search", type="primary", use_container_width=True) or query:
 
 st.divider()
 
-tab1, tab2, tab3 = st.tabs(["📖 Browse by Page", "🕒 Search History", "ℹ️ About"])
+tab1, tab2, tab3, tab4 = st.tabs(["📖 Browse by Page", "🕒 Search History", "ℹ️ About", "🔧 Technical Deep Dive"])
 
 with tab1:
     st.subheader("Browse Document by Page")
@@ -929,6 +1061,291 @@ with tab3:
     
     **Need help?** Check the sidebar for available documents and metadata.
     """)
+
+with tab4:
+    st.subheader("🔧 Technical Deep Dive")
+    
+    st.markdown("""
+    **Understand how the Clinical Protocol Intelligence system works behind the scenes.**
+    This tab shows the complete technical architecture, real-time execution flow, and performance metrics.
+    """)
+    
+    # Performance Metrics Dashboard
+    st.markdown("### 📊 Session Performance Metrics")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric(
+            "Total Searches", 
+            st.session_state.performance_metrics['total_searches'],
+            help="Number of search queries executed in this session"
+        )
+    
+    with col2:
+        avg_time = (st.session_state.performance_metrics['total_response_time'] / 
+                   max(st.session_state.performance_metrics['total_searches'], 1))
+        st.metric(
+            "Avg Response Time", 
+            f"{avg_time:.2f}s",
+            help="Average time from query to results display"
+        )
+    
+    with col3:
+        st.metric(
+            "Cortex Search Calls", 
+            st.session_state.performance_metrics['cortex_search_calls'],
+            help="Number of Cortex Search API calls made"
+        )
+    
+    with col4:
+        st.metric(
+            "LLM Calls", 
+            st.session_state.performance_metrics['llm_calls'],
+            help="Number of AI Complete (LLM) calls made"
+        )
+    
+    # Token Usage
+    if st.session_state.performance_metrics['total_input_tokens'] > 0:
+        col5, col6 = st.columns(2)
+        with col5:
+            st.metric(
+                "Input Tokens", 
+                f"{st.session_state.performance_metrics['total_input_tokens']:,}",
+                help="Total tokens sent to LLM (approximate)"
+            )
+        with col6:
+            st.metric(
+                "Output Tokens", 
+                f"{st.session_state.performance_metrics['total_output_tokens']:,}",
+                help="Total tokens generated by LLM (approximate)"
+            )
+    
+    st.divider()
+    
+    # Real-Time Execution Log
+    st.markdown("### 🔄 Real-Time Execution Flow")
+    
+    if st.session_state.execution_log:
+        st.markdown("**Most Recent Query Execution:**")
+        
+        # Show the latest execution steps
+        latest_steps = st.session_state.execution_log[-5:] if len(st.session_state.execution_log) >= 5 else st.session_state.execution_log
+        
+        for i, step in enumerate(latest_steps):
+            with st.expander(f"{step['step']} ({step.get('execution_time', 0):.3f}s)", expanded=i == len(latest_steps)-1):
+                
+                # Step details
+                st.json(step['details'])
+                
+                # SQL query if available
+                if step.get('query_sql'):
+                    st.markdown("**SQL Query:**")
+                    st.code(step['query_sql'], language='sql')
+                
+                # Timestamp
+                import datetime
+                timestamp = datetime.datetime.fromtimestamp(step['timestamp'])
+                st.caption(f"Executed at: {timestamp.strftime('%H:%M:%S.%f')[:-3]}")
+    else:
+        st.info("Execute a search query to see the real-time execution flow here.")
+    
+    st.divider()
+    
+    # Architecture Diagram
+    st.markdown("### 🏗️ System Architecture")
+    
+    st.markdown("""
+    ```
+    📄 PDF Upload
+        ↓
+    🐍 Python UDF (pdfminer)
+        • Extract text + bounding boxes: [x0, y0, x1, y1]
+        • Parse page dimensions: width × height
+        • Return structured JSON
+        ↓
+    🗄️ document_chunks Table
+        • chunk_id, doc_name, page, text
+        • bbox_x0, bbox_y0, bbox_x1, bbox_y1
+        • page_width, page_height, extracted_at
+        ↓
+    🔍 Cortex Search Service
+        • Auto-embedding generation (snowflake-arctic-embed-l-v2.0)
+        • Hybrid search (vector + keyword)
+        • Real-time indexing with TARGET_LAG = '1 hour'
+        ↓
+    🤖 Cortex AI Complete
+        • RAG pattern: Retrieval → Augmentation → Generation
+        • Multiple LLM options: Claude, Llama, GPT, Mistral
+        • Context-aware responses with source citations
+        ↓
+    🎨 Streamlit UI
+        • Professional Snowflake branding
+        • Interactive components with hover effects
+        • Real-time updates and error handling
+    ```
+    """)
+    
+    st.divider()
+    
+    # Technical Implementation Details
+    st.markdown("### 💻 Implementation Details")
+    
+    impl_tab1, impl_tab2, impl_tab3 = st.tabs(["🔍 Search Process", "🤖 LLM Integration", "📊 Data Pipeline"])
+    
+    with impl_tab1:
+        st.markdown("""
+        **Cortex Search Implementation:**
+        
+        ```python
+        # Snowflake Core API (type-safe)
+        from snowflake.core import Root
+        root = Root(session)
+        svc = root.databases[DB].schemas[SCHEMA].cortex_search_services[SERVICE]
+        
+        # Execute search with filters
+        response = svc.search(
+            query=user_query,
+            columns=['chunk_id', 'doc_name', 'page', 'text', 'bbox_x0', 'bbox_y0', 'bbox_x1', 'bbox_y1'],
+            filter={"@eq": {"doc_name": doc_filter}} if doc_filter else None,
+            limit=max_results
+        )
+        
+        # Parse and format results
+        results_json = response.json()
+        for result in results_json.get('results', []):
+            position = calculate_position_python(bbox_coords...)
+            # Format with citations
+        ```
+        
+        **Key Features:**
+        - Type-safe Python API (no SQL injection)
+        - Automatic embedding generation
+        - Hybrid search (semantic + keyword)
+        - Real-time filtering and ranking
+        """)
+    
+    with impl_tab2:
+        st.markdown("""
+        **LLM Answer Synthesis (RAG Pattern):**
+        
+        ```python
+        # Build context from search results
+        context = "\\n\\n".join([
+            f"[Source {i}] {result['doc_name']}, Page {result['page']}\\n{result['text']}"
+            for i, result in enumerate(search_results, 1)
+        ])
+        
+        # Construct prompt with instructions
+        prompt = f'''You are an expert clinical protocol assistant...
+        
+        <context>
+        {context}
+        </context>
+        
+        <question>
+        {user_question}
+        </question>
+        
+        Answer:'''
+        
+        # Call Cortex AI Complete
+        sql = "SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(?, ?) AS response"
+        result = session.sql(sql, params=[model_name, prompt]).collect()
+        ```
+        
+        **Available Models:**
+        - Claude: claude-4-sonnet, claude-haiku-4-5, claude-sonnet-4-5
+        - Llama: llama4-maverick, llama4-scout, llama3.1-405b
+        - GPT: openai-gpt-5, openai-gpt-5-mini
+        - Mistral: mistral-large2
+        """)
+    
+    with impl_tab3:
+        st.markdown("""
+        **PDF Processing Pipeline:**
+        
+        ```sql
+        -- 1. PDF Text Extraction UDF
+        CREATE FUNCTION pdf_txt_mapper_v3(scoped_file_url STRING)
+        RETURNS VARCHAR
+        LANGUAGE PYTHON
+        PACKAGES = ('pdfminer')
+        AS $$
+            # Extract text with bounding boxes
+            for page_num, page in enumerate(pages, start=1):
+                for text_box in page_layout:
+                    x0, y0, x1, y1 = text_box.bbox
+                    yield {
+                        'page': page_num,
+                        'bbox': [x0, y0, x1, y1],
+                        'page_width': page.width,
+                        'page_height': page.height,
+                        'txt': text_box.get_text()
+                    }
+        $$;
+        
+        -- 2. Structured Storage
+        CREATE TABLE document_chunks (
+            chunk_id VARCHAR PRIMARY KEY,
+            doc_name VARCHAR,
+            page INTEGER,
+            text VARCHAR,
+            bbox_x0 FLOAT, bbox_y0 FLOAT, bbox_x1 FLOAT, bbox_y1 FLOAT,
+            page_width FLOAT, page_height FLOAT,
+            extracted_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+        );
+        
+        -- 3. Cortex Search Service
+        CREATE CORTEX SEARCH SERVICE protocol_search
+        ON text
+        ATTRIBUTES page, doc_name
+        WAREHOUSE = compute_wh
+        EMBEDDING_MODEL = 'snowflake-arctic-embed-l-v2.0'
+        AS (SELECT * FROM document_chunks);
+        ```
+        """)
+    
+    st.divider()
+    
+    # Cost Estimation
+    st.markdown("### 💰 Cost Estimation")
+    
+    if st.session_state.performance_metrics['total_searches'] > 0:
+        # Rough cost calculation (these are example rates)
+        search_cost = st.session_state.performance_metrics['cortex_search_calls'] * 0.001  # $0.001 per search
+        llm_cost = (st.session_state.performance_metrics['total_input_tokens'] + 
+                   st.session_state.performance_metrics['total_output_tokens']) * 0.00002  # $0.02 per 1K tokens
+        total_cost = search_cost + llm_cost
+        
+        cost_col1, cost_col2, cost_col3 = st.columns(3)
+        
+        with cost_col1:
+            st.metric("Cortex Search", f"${search_cost:.4f}", help="Estimated cost for search operations")
+        
+        with cost_col2:
+            st.metric("AI Complete", f"${llm_cost:.4f}", help="Estimated cost for LLM operations")
+        
+        with cost_col3:
+            st.metric("Total Session", f"${total_cost:.4f}", help="Total estimated cost for this session")
+        
+        st.caption("💡 **Note:** These are estimated costs based on typical Snowflake Cortex pricing. Actual costs may vary.")
+    else:
+        st.info("Execute some searches to see cost estimates.")
+    
+    # Clear metrics button
+    if st.button("🔄 Reset Session Metrics"):
+        st.session_state.performance_metrics = {
+            'total_searches': 0,
+            'total_response_time': 0,
+            'cortex_search_calls': 0,
+            'llm_calls': 0,
+            'total_input_tokens': 0,
+            'total_output_tokens': 0
+        }
+        st.session_state.execution_log = []
+        st.success("Session metrics reset!")
+        st.rerun()
 
 # ============================================================================
 # Footer
