@@ -1213,15 +1213,18 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                                 st.session_state.selected_model
                             )
                         
-                        # Display the synthesized answer in styled container
-                        st.markdown(f"""
-                        <div class="ai-answer">
-                            <h3>🤖 AI-Generated Answer</h3>
-                            <div style="font-size: 16px; line-height: 1.6; margin-top: 15px;">
-                                {answer}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+        # Display the synthesized answer in styled container
+        # Clean up the answer formatting
+        cleaned_answer = answer.replace('\\n\\n', '\n\n').replace('\\"', '"').replace('\\n', '\n')
+        
+        st.markdown("""
+        <div class="ai-answer">
+            <h3>🤖 AI-Generated Answer</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Display the cleaned answer as markdown for better formatting
+        st.markdown(cleaned_answer)
                         
                         st.caption("💡 **Precise citations below** - Each source includes page, position, and exact bounding box coordinates for audit-grade traceability.")
                         
