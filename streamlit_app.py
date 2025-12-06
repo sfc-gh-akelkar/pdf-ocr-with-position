@@ -820,37 +820,6 @@ if st.session_state.show_about:
     
     st.markdown("---")
     
-    # ROI Calculator
-    st.markdown("## 💰 **Calculate Your ROI**")
-    
-    col_roi1, col_roi2, col_roi3 = st.columns([2, 1, 2])
-    
-    with col_roi1:
-        hours_per_week = st.slider(
-            "Hours your team spends on document review per week:",
-            min_value=1, max_value=40, value=15,
-            help="Include protocol review, regulatory submissions, cross-study analysis"
-        )
-        
-        hourly_rate = st.slider(
-            "Average loaded hourly rate ($):",
-            min_value=50, max_value=300, value=150,
-            help="Include salary, benefits, overhead costs"
-        )
-    
-    with col_roi3:
-        weekly_savings = hours_per_week * hourly_rate
-        annual_savings = weekly_savings * 52
-        roi_multiple = annual_savings // 1000
-        
-        st.metric("Weekly Savings", f"${weekly_savings:,}")
-        st.metric("Annual Savings", f"${annual_savings:,}")
-        st.success(f"🎯 **{roi_multiple}x ROI** in first year!")
-        
-        st.caption(f"Based on {hours_per_week} hours/week × ${hourly_rate}/hour × 52 weeks")
-    
-    st.markdown("---")
-    
     # Use Cases
     st.markdown("## 🎯 **Key Use Cases**")
     
