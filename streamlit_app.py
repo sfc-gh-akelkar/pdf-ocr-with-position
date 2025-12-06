@@ -1108,6 +1108,11 @@ if st.session_state.show_about:
     
     st.markdown("---")
     
+    # Back to search button at bottom (same as top)
+    if st.button("← Back to Search", type="primary"):
+        st.session_state.show_about = False
+        st.rerun()
+    
 
 else:
     # Normal app content
