@@ -19,6 +19,7 @@ import streamlit as st
 import pandas as pd
 import json
 from snowflake.snowpark.context import get_active_session
+from snowflake.core import Root
 
 # ============================================================================
 # Configuration
@@ -38,9 +39,15 @@ st.set_page_config(
 # Get Snowpark session
 session = get_active_session()
 
+# Initialize Snowflake Core API root
+root = Root(session)
+
+# Get Cortex Search service handle using Core API (cleaner than SQL approach)
+cortex_search_service = root.databases[DATABASE_NAME].schemas[SCHEMA_NAME].cortex_search_services["protocol_search"]
+
 # Note: Streamlit in Snowflake doesn't support USE SCHEMA statements
 # All queries use fully qualified names: DATABASE.SCHEMA.OBJECT
-# To use different database/schema, update the constants above and the SQL queries below
+# To use different database/schema, update the constants above
 
 # ============================================================================
 # Helper Functions
@@ -80,7 +87,7 @@ def calculate_position_python(bbox_x0, bbox_y0, bbox_x1, bbox_y1, page_width, pa
 
 def search_protocols(query, max_results=10, doc_filter=None):
     """
-    Search protocol documents using Cortex Search.
+    Search protocol documents using Cortex Search with Snowflake Core API.
     
     Args:
         query: Search query string
@@ -88,59 +95,70 @@ def search_protocols(query, max_results=10, doc_filter=None):
         doc_filter: Optional document name filter
     
     Returns:
-        List of search results with citations
+        Tuple of (formatted_results, raw_response_json)
     """
-    # Build filter clause if document filter is provided
-    filter_clause = ""
+    # Define columns to retrieve from Cortex Search
+    columns = [
+        "chunk_id",
+        "doc_name", 
+        "page",
+        "text",
+        "bbox_x0",
+        "bbox_y0",
+        "bbox_x1",
+        "bbox_y1",
+        "page_width",
+        "page_height"
+    ]
+    
+    # Execute Cortex Search using Core API (cleaner than SQL approach)
     if doc_filter:
-        filter_clause = f', "filter": {{"@eq": {{"doc_name": "{doc_filter}"}}}}'
+        # Search with document filter
+        filter_obj = {"@eq": {"doc_name": doc_filter}}
+        response = cortex_search_service.search(
+            query=query,
+            columns=columns,
+            filter=filter_obj,
+            limit=max_results
+        )
+    else:
+        # Search without filter
+        response = cortex_search_service.search(
+            query=query,
+            columns=columns,
+            limit=max_results
+        )
     
-    # Execute Cortex Search
-    search_sql = f"""
-        SELECT 
-            result.chunk_id,
-            result.doc_name,
-            result.page,
-            result.text,
-            result.bbox_x0,
-            result.bbox_y0,
-            result.bbox_x1,
-            result.bbox_y1,
-            result.page_width,
-            result.page_height
-        FROM TABLE(
-            SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
-                'SANDBOX.PDF_OCR.protocol_search',
-                '{{
-                    "query": "{query}",
-                    "columns": ["chunk_id", "doc_name", "page", "text", "bbox_x0", "bbox_y0", "bbox_x1", "bbox_y1", "page_width", "page_height"],
-                    "limit": {max_results}
-                    {filter_clause}
-                }}'
-            )
-        ) AS result
-    """
-    
-    results = session.sql(search_sql).collect()
+    # Parse response JSON
+    results_json = response.json()
     
     # Format results with positions
     formatted_results = []
-    for row in results:
+    for result in results_json.get('results', []):
         position = calculate_position_python(
-            row['BBOX_X0'], row['BBOX_Y0'], row['BBOX_X1'], row['BBOX_Y1'],
-            row['PAGE_WIDTH'], row['PAGE_HEIGHT']
+            result['bbox_x0'],
+            result['bbox_y0'],
+            result['bbox_x1'],
+            result['bbox_y1'],
+            result['page_width'],
+            result['page_height']
         )
         
         formatted_results.append({
-            'chunk_id': row['CHUNK_ID'],
-            'doc_name': row['DOC_NAME'],
-            'page': row['PAGE'],
+            'chunk_id': result['chunk_id'],
+            'doc_name': result['doc_name'],
+            'page': result['page'],
             'position': position,
-            'text': row['TEXT'],
-            'bbox': [row['BBOX_X0'], row['BBOX_Y0'], row['BBOX_X1'], row['BBOX_Y1']]
+            'text': result['text'],
+            'bbox': [
+                result['bbox_x0'],
+                result['bbox_y0'],
+                result['bbox_x1'],
+                result['bbox_y1']
+            ]
         })
     
-    return formatted_results
+    return formatted_results, results_json
 
 
 def get_available_documents():
@@ -189,12 +207,41 @@ def get_page_content(doc_name, page_num):
     return page_content
 
 
+def get_presigned_url(doc_name, expiration_seconds=360):
+    """
+    Get a presigned URL to view/download the source PDF.
+    
+    Args:
+        doc_name: Document filename in the stage
+        expiration_seconds: URL validity duration (default 6 minutes)
+    
+    Returns:
+        Presigned URL string or None if error
+    """
+    try:
+        sql = f"""
+            SELECT GET_PRESIGNED_URL(
+                @{DATABASE_NAME}.{SCHEMA_NAME}.PDF_STAGE,
+                '{doc_name}',
+                {expiration_seconds}
+            ) AS URL
+        """
+        result = session.sql(sql).collect()
+        return result[0]['URL'] if result else None
+    except Exception as e:
+        st.error(f"Error generating presigned URL: {str(e)}")
+        return None
+
+
 # ============================================================================
 # Session State Initialization
 # ============================================================================
 
 if 'search_history' not in st.session_state:
     st.session_state.search_history = []
+
+if 'show_debug' not in st.session_state:
+    st.session_state.show_debug = False
 
 # ============================================================================
 # Sidebar - Document Browser
@@ -231,6 +278,14 @@ try:
                 hide_index=True,
                 use_container_width=True
             )
+        
+        # Debug toggle
+        st.sidebar.divider()
+        st.session_state.show_debug = st.sidebar.checkbox(
+            '🔧 Show Debug Info',
+            value=st.session_state.show_debug,
+            help="Display raw Cortex Search response JSON"
+        )
     else:
         st.sidebar.warning("⚠️ No documents found")
         st.sidebar.info("Upload PDFs to @PDF_STAGE and run:\n```sql\nCALL process_new_pdfs();\n```")
@@ -267,7 +322,12 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                 doc_filter = None if selected_doc == 'All Documents' else selected_doc
                 
                 # Execute search
-                results = search_protocols(query, max_results, doc_filter)
+                results, raw_response = search_protocols(query, max_results, doc_filter)
+                
+                # Show debug info if enabled
+                if st.session_state.show_debug:
+                    with st.sidebar.expander("🔍 Raw Cortex Search Response", expanded=False):
+                        st.json(raw_response)
                 
                 # Add to search history
                 st.session_state.search_history.insert(0, {
@@ -279,6 +339,17 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                 # Display results
                 if len(results) > 0:
                     st.success(f"Found {len(results)} relevant result(s)")
+                    
+                    # Show source documents in sidebar
+                    unique_docs = list(set(r['doc_name'] for r in results))
+                    if len(unique_docs) > 0:
+                        with st.sidebar.expander("📄 Source Documents", expanded=True):
+                            for doc in unique_docs:
+                                presigned_url = get_presigned_url(doc)
+                                if presigned_url:
+                                    st.markdown(f"[📎 View {doc}]({presigned_url})")
+                                else:
+                                    st.text(f"📎 {doc}")
                     
                     # Display each result as a card
                     for i, result in enumerate(results, 1):
