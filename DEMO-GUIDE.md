@@ -1,445 +1,296 @@
-# Demo Guide - Clinical Protocol Intelligence with Streamlit
+# Clinical Protocol Intelligence - Demo Guide
+## 15-20 Minute Executive Demo
 
-## 📋 Pre-Demo Checklist
-
-### ✅ Setup Requirements (Run BEFORE demo):
-
-1. **Database setup complete**
-   - Run `setup.sql` to create all objects
-   - Verify: `SHOW CORTEX SEARCH SERVICES LIKE 'protocol_search';`
-
-2. **PDF uploaded and processed**
-   - Upload `Prot_000.pdf` to `@PDF_STAGE`
-   - Run: `CALL process_new_pdfs();`
-   - Verify: `SELECT COUNT(*) FROM document_chunks;` (should show > 0)
-
-3. **Streamlit app deployed**
-   - Deploy `streamlit_app.py` as Streamlit in Snowflake
-   - Test: Open app and verify document browser shows PDF
-
-4. **Warehouse running**
-   - `compute_wh` should be active and sized appropriately (Small/Medium)
-
-5. **Browser tabs open:**
-   - Streamlit app (primary demo)
-   - SQL worksheet (for showing backend if needed)
-
-### 🎯 What to Pre-Test:
-
-- [ ] Open Streamlit app - loads without errors
-- [ ] Document browser shows uploaded PDF with metadata
-- [ ] Run test search: "dosing schedule" returns results
-- [ ] Results show proper citations (page + position)
-- [ ] Browse by page works
-- [ ] Export to CSV works
+### 🎯 **Demo Objectives**
+- Showcase AI-powered document Q&A with audit-grade citations
+- Demonstrate Snowflake-native architecture and capabilities
+- Highlight business value for pharmaceutical/clinical teams
+- Show technical sophistication without overwhelming business audience
 
 ---
 
-## 🎬 Demo Flow
+## 📋 **Pre-Demo Checklist**
+- [ ] Streamlit app is running and accessible
+- [ ] Prot_000.pdf is uploaded and processed
+- [ ] Test search functionality with sample queries
+- [ ] Prepare backup questions if live demo fails
+- [ ] Have Technical Deep Dive tab ready for technical questions
+
+---
+
+## 🎬 **Demo Script & Talking Points**
 
 ### **Opening Hook (2 minutes)**
 
-**YOU SAY:**
-> "Pharmaceutical companies deal with hundreds of clinical protocol PDFs. When regulatory teams need to find specific information - like dosing schedules, inclusion criteria, or safety data - they face these challenges..."
+**🎤 Speaker Notes:**
+*"Today I'm going to show you something that will fundamentally change how your teams work with clinical protocol documents. Instead of spending hours manually searching through 200-page PDFs, you'll get instant, AI-powered answers with audit-grade precision."*
 
-**SHOW:** Open a sample PDF in another tab and simulate manual search:
-- Ctrl+F for "dosing"
-- Multiple matches, no context
-- No way to know if you found everything
-- No citation for audit trail
+**Key Points:**
+- **Problem**: Teams spend hours manually reviewing protocol documents
+- **Solution**: AI-powered search with exact citations
+- **Value**: 10x faster document review with regulatory compliance
 
-**YOU SAY:**
-> "What if instead of this manual process, they could just ask questions in natural language and get instant answers with **audit-grade citations** - not just page numbers, but exact positions like 'Page 5, top-right'?"
-
-**TRANSITION:** "Let me show you what we built, 100% native in Snowflake."
+**Visual**: Show the main application interface
 
 ---
 
-### **Part 1: The Streamlit App (10 minutes)**
+### **The Challenge (2 minutes)**
 
-**OPEN:** Streamlit app in full screen
+**🎤 Speaker Notes:**
+*"Let me paint a picture of what your teams face today. When an FDA inspector asks 'Show me all mentions of adverse events in your protocol,' your team has to manually search through hundreds of pages, hoping they don't miss anything critical. The result? Hours of work, potential human error, and vague citations like 'mentioned somewhere on page 5.'"*
 
-#### **1. Show the Interface (1 minute)**
+**Click**: Navigate to "About This App" in sidebar
 
-**YOU SAY:**
-> "This is a Streamlit in Snowflake app. It's 100% native - no external services, no data leaving Snowflake. Everything runs inside your Snowflake environment with full governance."
+**Key Points:**
+- **Manual Process**: Hours searching 200+ page PDFs
+- **Human Error**: Risk of missing critical information  
+- **Vague Citations**: "It's somewhere in the document"
+- **Regulatory Risk**: Insufficient audit trails
 
-**POINT OUT:**
-- Clean, user-friendly interface
-- Document browser in sidebar
-- Search bar for natural language queries
-- Tabs for different features
-
-#### **2. Document Browser (2 minutes)**
-
-**SHOW:** Sidebar
-
-**YOU SAY:**
-> "The document browser shows all available protocols. Notice it shows metadata automatically - total pages, number of text chunks extracted, when it was processed."
-
-**CLICK:** On a document in the sidebar
-
-**SHOW:** Metadata updates (pages, chunks, processed date)
-
-**KEY POINT:** "This metadata is automatically extracted. No manual cataloging needed."
-
-#### **3. Semantic Search Demo (5 minutes)**
-
-**YOU SAY:**
-> "Now let's ask a real question. I'm going to ask: 'What is the dosing schedule?'"
-
-**TYPE:** `What is the dosing schedule?`
-
-**CLICK:** Search
-
-**WAIT:** for results (should be < 2 seconds)
-
-**POINT OUT as results appear:**
-
-1. **Speed:** "Notice how fast that was - semantic search across the entire document"
-
-2. **Citations:** "Every result shows:"
-   - Document name (`Prot_000.pdf`)
-   - Page number (`Page 5`)
-   - Position on page (`top-right`, `middle-center`, etc.)
-
-3. **Relevance:** "These are semantically ranked - not just keyword matching. Cortex Search understands meaning."
-
-4. **Details:** Click "Details" expander
-   - Show chunk ID (for traceability)
-   - Show bounding box coordinates
-   - **KEY POINT:** "These coordinates could be used to highlight the exact text in a PDF viewer"
-
-**TRY ANOTHER QUERY:**
-
-**YOU SAY:**
-> "Let's try something more complex: 'What are the inclusion criteria?'"
-
-**TYPE:** `What are the inclusion criteria?`
-
-**SHOW:** Results with different pages and positions
-
-**POINT OUT:** "Notice it found relevant sections across multiple pages, all with precise locations."
-
-#### **4. Export Results (1 minute)**
-
-**CLICK:** "Export Results to CSV"
-
-**DOWNLOAD:** the CSV file
-
-**SHOW:** Open CSV in preview
-
-**YOU SAY:**
-> "Users can export results for documentation, regulatory submissions, or offline analysis. Every citation is preserved for audit trails."
-
-#### **5. Browse by Page (1 minute)**
-
-**CLICK:** "Browse by Page" tab
-
-**YOU SAY:**
-> "Users can also browse specific pages directly if they know where to look."
-
-**SELECT:** Document from sidebar (if not already selected)
-
-**ENTER:** Page number (e.g., 5)
-
-**CLICK:** "Load Page"
-
-**SHOW:** All text chunks from that page with positions
-
-**YOU SAY:**
-> "This shows all extracted content from the page, organized by position. Great for verification or detailed review."
+**Visual**: Show the Problem/Solution comparison in About page
 
 ---
 
-### **Part 2: The Technology Behind It (5 minutes)**
+### **The Solution Overview (3 minutes)**
 
-**SWITCH TO:** SQL worksheet (optional, depending on technical audience)
+**🎤 Speaker Notes:**
+*"Our Clinical Protocol Intelligence solution changes everything. Watch this..."*
 
-**YOU SAY:**
-> "Let me show you what makes this possible. It's all Snowflake-native."
+**Click**: Back to main search interface
 
-#### **1. PDF Extraction UDF**
+**Demonstrate**: Type "What are the adverse events?" and execute search
 
-**SHOW:** (don't run, just show code)
-```sql
-SHOW FUNCTIONS LIKE 'pdf_txt_mapper_v3';
-```
+**Key Points:**
+- **AI Understanding**: Semantic search, not just keyword matching
+- **Instant Results**: Seconds instead of hours
+- **Precise Citations**: Page number + position + exact coordinates
+- **Audit-Grade**: Every answer is verifiable
 
-**YOU SAY:**
-> "We built a Python UDF using pdfminer that extracts text with full bounding box coordinates - the x,y coordinates of every text box on every page."
-
-**SHOW:** Example output structure (from `setup.sql` comments):
-```json
-{
-  "page": 5,
-  "bbox": [320, 680, 550, 720],
-  "page_width": 612,
-  "page_height": 792,
-  "txt": "Dosing is BID for 28 days..."
-}
-```
-
-**KEY POINT:** "This is the secret sauce - extracting not just text, but WHERE it appears on the page."
-
-#### **2. Document Chunks Table**
-
-**RUN:**
-```sql
-SELECT * FROM document_chunks LIMIT 5;
-```
-
-**YOU SAY:**
-> "All that extracted data goes into a structured table that we can query. Notice the bounding box columns - x0, y0, x1, y1 - that define exact rectangles around text."
-
-#### **3. Cortex Search**
-
-**SHOW:**
-```sql
-SHOW CORTEX SEARCH SERVICES LIKE 'protocol_search';
-```
-
-**YOU SAY:**
-> "Cortex Search automatically generates embeddings for semantic search. We don't manage vectors - Snowflake handles all of that. The service auto-refreshes as new documents are added."
-
-**RUN:** Direct Cortex Search query:
-```sql
-SELECT * FROM TABLE(
-    SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
-        'protocol_search',
-        '{"query": "dosing schedule", "columns": ["text", "page", "doc_name"], "limit": 3}'
-    )
-);
-```
-
-**YOU SAY:**
-> "This is what the Streamlit app calls under the hood. Direct semantic search with one function call."
-
-#### **4. Position Calculator**
-
-**SHOW/RUN:**
-```sql
-SELECT 
-    page,
-    calculate_position_description(bbox_x0, bbox_y0, bbox_x1, bbox_y1, page_width, page_height) AS position,
-    SUBSTR(text, 1, 50) AS text_preview
-FROM document_chunks
-LIMIT 5;
-```
-
-**YOU SAY:**
-> "We convert raw coordinates into human-readable positions like 'top-right' or 'middle-center'. Makes citations more intuitive for users."
+**🎤 Speaker Notes:**
+*"Notice what just happened. In 2 seconds, the AI found relevant information across the entire document, understood the context of 'adverse events,' and gave me exact citations. Page 184, top-center, with precise coordinates [72.0, 458.4, 543.3, 723.9]. An auditor can verify this instantly."*
 
 ---
 
-### **Part 3: Automated Pipeline (3 minutes)**
+### **Core Capabilities Demo (5 minutes)**
 
-**YOU SAY:**
-> "Now here's where it gets operationally powerful. This isn't a one-off demo - it's production-ready with automated processing."
+#### **Capability 1: Natural Language Q&A**
 
-#### **1. Show Directory Monitoring**
+**🎤 Speaker Notes:**
+*"Let me show you how natural this is. I can ask questions just like I would ask a colleague."*
 
-**RUN:**
-```sql
-SELECT * FROM DIRECTORY(@PDF_STAGE);
-```
+**Demonstrate**: 
+- "What is the dosing schedule?"
+- "What are the inclusion criteria?"
+- "How long is the treatment period?"
 
-**YOU SAY:**
-> "Snowflake's directory tables automatically track files in stages. We can detect new PDFs as soon as they're uploaded."
+**Key Points:**
+- **Natural Language**: Ask questions conversationally
+- **AI Synthesis**: LLM generates coherent answers
+- **Multiple Sources**: Combines information from different sections
 
-#### **2. Processing Procedure**
+#### **Capability 2: Precise Citations**
 
-**SHOW** (don't run, just show):
-```sql
-CALL process_new_pdfs();
-```
+**🎤 Speaker Notes:**
+*"But here's what makes this revolutionary for regulated industries - every single piece of information comes with audit-grade citations."*
 
-**YOU SAY:**
-> "This stored procedure automatically:
-> 1. Finds new PDFs in the stage
-> 2. Extracts text with our UDF
-> 3. Loads it into the table
-> 4. Refreshes the Cortex Search index
-> 
-> It can be called manually or scheduled with Snowflake Tasks."
+**Show**: Expand "Sources Used (with exact coordinates)"
 
-#### **3. Scheduled Task**
+**Key Points:**
+- **Page Numbers**: Exact page reference
+- **Position**: Human-readable (top-right, middle-center)
+- **Coordinates**: Machine-readable [x0, y0, x1, y1]
+- **Source Text**: Actual extracted content
 
-**RUN:**
-```sql
-SHOW TASKS LIKE 'process_pdfs_task';
-```
+#### **Capability 3: Multiple LLM Models**
 
-**YOU SAY:**
-> "We created a task that runs every hour. Drop new PDFs in the stage, and within an hour, they're automatically indexed and searchable. Zero manual work."
+**🎤 Speaker Notes:**
+*"We support multiple state-of-the-art AI models. Claude 4 Sonnet is our default for highest quality, but you can choose based on your needs."*
 
----
+**Show**: Model selection dropdown in sidebar
 
-### **Part 4: The Snowflake-Native Advantage (3 minutes)**
-
-**SWITCH BACK TO:** Streamlit app
-
-**YOU SAY:**
-> "What makes this solution different from external RAG tools?"
-
-**ENUMERATE benefits:**
-
-1. **Zero Data Movement**
-   - "PDFs stay in Snowflake stages. No copying to vector databases or cloud storage."
-
-2. **Native Governance**
-   - "Snowflake RBAC controls who can see what. Full audit logs. GxP compliant."
-
-3. **No Infrastructure**
-   - "No servers to manage, no vector databases to maintain. Just SQL and Streamlit."
-
-4. **Precise Citations**
-   - "Not just 'found on page 5' - we give exact positions with coordinates. Regulatory teams can verify every answer."
-
-5. **Automatic Scaling**
-   - "Cortex Search and UDFs scale automatically. Works with 10 PDFs or 10,000."
-
-**KEY POINT for Pharma/Regulated Industries:**
-> "For clinical trials and regulatory submissions, you need audit-grade traceability. This solution provides exact citations - page, position, coordinates - that meet FDA and EMA requirements for source data verification."
+**Key Points:**
+- **Claude 4 Sonnet**: Highest quality (default)
+- **Multiple Options**: 10 different models available
+- **Flexibility**: Choose based on speed vs quality needs
 
 ---
 
-### **Finale: Value Summary (2 minutes)**
+### **Business Value Deep Dive (4 minutes)**
 
-**YOU SAY:**
-> "Let's recap what we've shown:"
+**🎤 Speaker Notes:**
+*"Let me show you the business impact this creates."*
 
-**SUMMARIZE:**
+**Navigate**: Back to "About This App" → Use Cases tabs
 
-✅ **Instant Search**
-- "Seconds instead of hours to find information"
+#### **Regulatory Compliance Use Case**
 
-✅ **Precise Citations**
-- "Audit-grade traceability with page and position"
+**Click**: Regulatory Compliance tab
 
-✅ **100% Snowflake-Native**
-- "No external services, full governance, zero data movement"
+**🎤 Speaker Notes:**
+*"When an FDA inspector asks about adverse events, instead of this..."* [gesture to manual process] *"...you get this..."* [show example results]
 
-✅ **Automated Pipeline**
-- "Drop PDFs in a stage, get searchable in an hour"
+**Key Points:**
+- **90% Faster**: Protocol review time
+- **100% Coverage**: Never miss critical information
+- **Zero Audit Findings**: Precise source verification
 
-✅ **User-Friendly Interface**
-- "Streamlit app for non-technical users, no SQL required"
+#### **Cross-Study Analysis Use Case**
 
-**CLOSE:**
-> "This isn't just a demo - it's production-ready code. We can deploy this in your environment today and have you searching your protocol library by tomorrow."
+**Click**: Cross-Study Analysis tab
 
----
+**🎤 Speaker Notes:**
+*"For protocol comparison across studies, you can instantly verify consistency. Same dosing schedule across versions? Different inclusion criteria? You'll know immediately."*
 
-## 🎯 Talking Points by Audience
-
-### For **Regulatory Affairs / Clinical Ops:**
-- Emphasize **audit-grade citations** and **traceability**
-- Mention **FDA/EMA compliance** for source data verification
-- Highlight **export to CSV** for regulatory submissions
-- Show **bounding box coordinates** for verification
-
-### For **IT / Data Engineering:**
-- Show **SQL setup** and **UDF code**
-- Emphasize **Snowflake-native** (no external dependencies)
-- Demo **automated pipeline** with tasks
-- Discuss **scalability** and **governance**
-
-### For **Business Users:**
-- Focus on **Streamlit app UI**
-- Keep it simple: "Ask questions, get answers"
-- Show **document browser** and **export**
-- Avoid technical details
-
-### For **Executives:**
-- **Speed:** "Hours → seconds for document research"
-- **Cost:** "No infrastructure, pay only for what you use"
-- **Risk:** "No data movement, full Snowflake governance"
-- **Value:** "Faster trial startup, faster regulatory submissions"
+**Key Points:**
+- **Instant Comparison**: Across multiple documents
+- **Change Detection**: Identify protocol variations
+- **Compliance Verification**: Ensure consistency
 
 ---
 
-## 🛠️ Troubleshooting During Demo
+### **Technical Excellence (3 minutes)**
 
-### Issue: Streamlit app is slow
-**Fix:** Pre-warm the warehouse before the demo:
-```sql
-SELECT COUNT(*) FROM document_chunks;
-```
+**🎤 Speaker Notes:**
+*"Now, for our technical stakeholders, let me show you what makes this possible."*
 
-### Issue: No search results
-**Check:**
-- Document was processed: `SELECT COUNT(*) FROM document_chunks;`
-- Cortex Search is active: `SHOW CORTEX SEARCH SERVICES;`
-- Refresh index: `ALTER CORTEX SEARCH SERVICE protocol_search REFRESH;`
+**Navigate**: Technical Deep Dive tab
 
-### Issue: Streamlit app error on load
-**Fix:** Restart the app or refresh the browser
+**Show**: Architecture overview and data flow
 
-### Issue: "No documents found" in sidebar
-**Fix:** 
-- Check data exists: `SELECT DISTINCT doc_name FROM document_chunks;`
-- Ensure schema is correct in app: `USE SCHEMA SANDBOX.PDF_OCR;`
+**Key Points:**
+- **100% Snowflake Native**: Data never leaves your environment
+- **Enterprise Security**: Native RBAC, audit logging
+- **No External APIs**: Zero data movement risk
+- **Scalable**: Serverless Snowflake infrastructure
 
----
+**🎤 Speaker Notes:**
+*"This isn't just a demo - it's production-ready architecture. Every component runs within your Snowflake environment with enterprise governance."*
 
-## 📊 Sample Questions for Different Use Cases
+**Click**: Performance metrics (if available)
 
-### Clinical Protocols:
-```
-What is the dosing schedule?
-What are the inclusion criteria?
-List all adverse events
-What is the primary endpoint?
-How long is the treatment period?
-Describe the patient population
-What are the exclusion criteria?
-```
-
-### Regulatory Documents:
-```
-What are the safety monitoring procedures?
-Describe the data monitoring committee
-What are the stopping rules?
-Find information about informed consent
-```
-
-### Operational:
-```
-How many pages is this protocol?
-What documents mention chemotherapy?
-Find all references to FDA guidance
-```
+**Key Points:**
+- **Real-time Monitoring**: Performance tracking
+- **Cost Transparency**: Token usage and estimates
+- **Debug Capabilities**: Full execution visibility
 
 ---
 
-## 🎁 Leave-Behinds
+### **Live Q&A Demo (2 minutes)**
 
-After the demo, provide:
+**🎤 Speaker Notes:**
+*"Let me take a question from the audience and show you how this works in real-time."*
 
-1. **GitHub Repo** (if public)
-2. **setup.sql** - Complete setup script
-3. **streamlit_app.py** - App source code
-4. **README.md** - Full documentation
-5. **QUICKSTART.md** - Setup guide
+**Suggested Questions** (if audience doesn't provide):
+- "What are the contraindications for this study?"
+- "How is response evaluated?"
+- "What biomarkers are being measured?"
+- "What are the stopping rules?"
+
+**Demonstrate**: 
+1. Type the question
+2. Show search execution
+3. Highlight AI answer quality
+4. Point out precise citations
+5. Show source verification
+
+---
+
+### **Closing & Next Steps (1 minute)**
+
+**🎤 Speaker Notes:**
+*"In just 15 minutes, you've seen how Clinical Protocol Intelligence transforms document review from hours of manual work to seconds of AI-powered analysis - all while maintaining audit-grade precision that regulators demand."*
+
+**Key Takeaways:**
+- **Immediate Impact**: 10x faster document review
+- **Regulatory Ready**: Audit-grade citations and traceability
+- **Snowflake Native**: Enterprise security and governance
+- **Production Ready**: Scalable, monitored, cost-transparent
 
 **Next Steps:**
-1. "Let's schedule a technical workshop to deploy in your environment"
-2. "What other document types would you like to add?"
-3. "Would you like to see this integrated with your eTMF system?"
+- **Pilot Program**: Start with your most critical protocols
+- **Training Session**: Hands-on workshop for your team
+- **Technical Deep Dive**: Architecture review with IT team
+- **ROI Analysis**: Quantify time savings and cost benefits
 
 ---
 
-## 💡 Advanced Features to Mention (If Time)
+## 🎯 **Audience-Specific Talking Points**
 
-- **Multi-document comparison**: "We could add side-by-side protocol comparison"
-- **PDF viewer integration**: "Bounding boxes could highlight source text in a PDF viewer"
-- **Document versioning**: "Track protocol amendments and changes over time"
-- **Custom metadata**: "Add trial phase, indication, sponsor info for richer filtering"
-- **Alerts**: "Get notified when specific terms appear in new protocols"
+### **For Business Stakeholders:**
+- Focus on time savings and regulatory compliance
+- Emphasize audit-grade citations and traceability
+- Highlight consistency and error reduction
+- Show cross-document analysis capabilities
+
+### **For Technical Stakeholders:**
+- Demonstrate Snowflake-native architecture
+- Show Technical Deep Dive tab extensively
+- Discuss security and governance features
+- Highlight performance monitoring and debugging
+
+### **For Regulatory Affairs:**
+- Emphasize precise citations and coordinates
+- Show source verification capabilities
+- Discuss audit trail and compliance features
+- Demonstrate consistency checking across documents
 
 ---
 
-**Remember:** The key differentiator is **precise citations with positions**. Keep coming back to "Page 5, top-right, coordinates [320, 680, 550, 720]" - this is what competitors can't do.
+## 🚨 **Backup Plans**
 
-🎉 **Good luck with your demo!**
+### **If Live Demo Fails:**
+1. **Screenshots**: Have key screenshots ready
+2. **Video Recording**: Pre-recorded demo walkthrough
+3. **Static Examples**: Prepared Q&A examples with results
+
+### **If Technical Questions Arise:**
+1. **Architecture Diagrams**: Technical Deep Dive tab
+2. **Code Examples**: Show actual implementation details
+3. **Performance Data**: Real metrics from Technical Deep Dive
+
+### **If Business Value Questions:**
+1. **Use Cases**: Detailed scenarios in About page
+2. **Success Metrics**: Quantified benefits
+3. **Competitive Advantages**: vs manual/external solutions
+
+---
+
+## 📝 **Post-Demo Follow-Up**
+
+### **Immediate Actions:**
+- [ ] Send demo recording and materials
+- [ ] Schedule technical deep dive session
+- [ ] Provide setup instructions and requirements
+- [ ] Share relevant use case documentation
+
+### **Next Meeting Agenda:**
+- [ ] Hands-on workshop with user's documents
+- [ ] Technical architecture review
+- [ ] Implementation timeline and milestones
+- [ ] Success metrics and KPIs definition
+
+---
+
+## 💡 **Pro Tips for Success**
+
+### **Demo Delivery:**
+- **Start with Impact**: Lead with business value, not features
+- **Show, Don't Tell**: Live demonstration beats slides
+- **Handle Errors Gracefully**: Have backup plans ready
+- **Engage Audience**: Ask for their specific questions
+
+### **Technical Confidence:**
+- **Know Your Limits**: Be honest about current capabilities
+- **Highlight Roadmap**: Show future enhancements
+- **Address Concerns**: Security, scalability, cost proactively
+- **Provide Evidence**: Real metrics and performance data
+
+### **Business Alignment:**
+- **Speak Their Language**: Use their terminology and pain points
+- **Quantify Value**: Specific time savings and cost reductions
+- **Address Objections**: Have answers for common concerns
+- **Create Urgency**: Show competitive advantage and ROI
+
+---
+
+**🎯 Remember: This isn't just a technology demo - it's a business transformation presentation. Focus on outcomes, not features!**
