@@ -294,6 +294,7 @@ def synthesize_answer_with_llm(question, search_results, model_name='claude-3-5-
             'doc_name': result['doc_name'],
             'page': result['page'],
             'position': result['position'],
+            'bbox': result['bbox'],  # Include bounding box coordinates
             'text': result['text'][:200] + '...' if len(result['text']) > 200 else result['text']
         })
     
@@ -508,14 +509,22 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                         # Display the synthesized answer
                         st.markdown(f"**Answer:** {answer}")
                         
-                        # Show citations
-                        with st.expander("📚 Sources Used", expanded=False):
+                        st.caption("💡 **Precise citations below** - Each source includes page, position, and exact bounding box coordinates for audit-grade traceability.")
+                        
+                        # Show citations with coordinates
+                        with st.expander("📚 Sources Used (with exact coordinates)", expanded=True):
                             for cite in citations:
-                                st.markdown(
-                                    f"**[Source {cite['source_num']}]** {cite['doc_name']}, "
-                                    f"Page {cite['page']} ({cite['position']})"
-                                )
-                                st.caption(cite['text'])
+                                col1, col2 = st.columns([3, 1])
+                                with col1:
+                                    st.markdown(
+                                        f"**[Source {cite['source_num']}]** {cite['doc_name']}, "
+                                        f"Page {cite['page']} ({cite['position']})"
+                                    )
+                                    st.caption(cite['text'])
+                                with col2:
+                                    st.caption("**Bounding Box:**")
+                                    bbox_str = f"[{cite['bbox'][0]:.1f}, {cite['bbox'][1]:.1f}, {cite['bbox'][2]:.1f}, {cite['bbox'][3]:.1f}]"
+                                    st.code(bbox_str, language=None)
                                 st.divider()
                         
                         st.divider()
