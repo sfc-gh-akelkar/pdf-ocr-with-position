@@ -4,11 +4,19 @@ Clinical Protocol Q&A - Streamlit in Snowflake App
 This app provides intelligent search over clinical protocol PDFs with precise citations.
 
 Features:
-- Semantic search powered by Snowflake Cortex Search
+- Semantic search powered by Snowflake Cortex Search (using Core API)
 - Precise citations with page number and position (e.g., "Page 5, top-right")
 - Document browser and metadata
+- Presigned URLs to view source PDFs
 - Search history
 - Export results
+- Debug mode for raw Cortex Search responses
+
+Technical Implementation:
+- Uses Snowflake Core API (snowflake.core.Root) for type-safe Cortex Search access
+- Python dict filters instead of JSON string manipulation
+- Returns structured JSON responses for better error handling
+- Presigned URLs for secure document access
 
 Requirements:
 - Run setup.sql first to create all database objects
@@ -233,6 +241,100 @@ def get_presigned_url(doc_name, expiration_seconds=360):
         return None
 
 
+def _display_result_card(result_num, result):
+    """Helper function to display a search result card."""
+    with st.container():
+        # Citation header
+        st.markdown(f"### 📌 Result {result_num}: {result['doc_name']}")
+        st.caption(f"**Page {result['page']} ({result['position']})**")
+        
+        # Text content
+        st.markdown(f"> {result['text']}")
+        
+        # Expandable details
+        with st.expander("🔍 Details"):
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.write(f"**Chunk ID:** `{result['chunk_id']}`")
+                st.write(f"**Position:** {result['position']}")
+            with col_b:
+                st.write(f"**Bounding Box:**")
+                st.code(f"[{', '.join([f'{x:.1f}' for x in result['bbox']])}]")
+        
+        st.divider()
+
+
+def synthesize_answer_with_llm(question, search_results, model_name='llama3.1-70b'):
+    """
+    Use Snowflake Cortex Complete to synthesize a natural language answer
+    from search results (RAG pattern).
+    
+    Args:
+        question: User's question
+        search_results: List of search results from Cortex Search
+        model_name: LLM model to use for synthesis
+    
+    Returns:
+        Tuple of (synthesized_answer, source_citations)
+    """
+    # Build context from search results
+    context_chunks = []
+    citations = []
+    
+    for i, result in enumerate(search_results, 1):
+        chunk_text = f"[Source {i}] Document: {result['doc_name']}, Page {result['page']} ({result['position']})\n{result['text']}"
+        context_chunks.append(chunk_text)
+        citations.append({
+            'source_num': i,
+            'doc_name': result['doc_name'],
+            'page': result['page'],
+            'position': result['position'],
+            'text': result['text'][:200] + '...' if len(result['text']) > 200 else result['text']
+        })
+    
+    context = "\n\n".join(context_chunks)
+    
+    # Build prompt following best practices from Snowflake guide
+    prompt = f"""You are an expert clinical protocol assistant that extracts information from the CONTEXT provided
+between <context> and </context> tags.
+
+When answering the question between <question> and </question> tags:
+- Be concise and accurate
+- Do NOT hallucinate or make up information
+- If you don't have the information in the CONTEXT, clearly say so
+- Only answer based on information in the CONTEXT
+- Always cite your sources using the [Source N] references
+- Mention the document name, page, and position when citing
+
+Do not mention "the CONTEXT" in your answer - write naturally as if you're an expert.
+
+<context>
+{context}
+</context>
+
+<question>
+{question}
+</question>
+
+Answer:"""
+    
+    # Call Cortex Complete
+    try:
+        sql = """
+            SELECT SNOWFLAKE.CORTEX.COMPLETE(?, ?) AS response
+        """
+        result = session.sql(sql, params=[model_name, prompt]).collect()
+        
+        if result:
+            answer = result[0]['RESPONSE']
+            return answer, citations
+        else:
+            return "Error: No response from LLM", citations
+            
+    except Exception as e:
+        return f"Error synthesizing answer: {str(e)}", citations
+
+
 # ============================================================================
 # Session State Initialization
 # ============================================================================
@@ -242,6 +344,12 @@ if 'search_history' not in st.session_state:
 
 if 'show_debug' not in st.session_state:
     st.session_state.show_debug = False
+
+if 'use_llm_synthesis' not in st.session_state:
+    st.session_state.use_llm_synthesis = True
+
+if 'selected_model' not in st.session_state:
+    st.session_state.selected_model = 'llama3.1-70b'
 
 # ============================================================================
 # Sidebar - Document Browser
@@ -277,6 +385,24 @@ try:
                 docs_df[['DOC_NAME', 'TOTAL_PAGES', 'TOTAL_CHUNKS']],
                 hide_index=True,
                 use_container_width=True
+            )
+        
+        # LLM Settings
+        st.sidebar.divider()
+        st.sidebar.subheader("🤖 AI Settings")
+        
+        st.session_state.use_llm_synthesis = st.sidebar.checkbox(
+            '✨ Use AI Answer Synthesis',
+            value=st.session_state.use_llm_synthesis,
+            help="Use LLM to generate natural language answers from search results (RAG pattern)"
+        )
+        
+        if st.session_state.use_llm_synthesis:
+            st.session_state.selected_model = st.sidebar.selectbox(
+                'Select LLM Model:',
+                options=['llama3.1-70b', 'llama3.1-8b', 'mistral-large2', 'snowflake-arctic'],
+                index=0,
+                help="Model for answer synthesis"
             )
         
         # Debug toggle
@@ -351,27 +477,46 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                                 else:
                                     st.text(f"📎 {doc}")
                     
-                    # Display each result as a card
-                    for i, result in enumerate(results, 1):
-                        with st.container():
-                            # Citation header
-                            st.markdown(f"### 📌 Result {i}: {result['doc_name']}")
-                            st.caption(f"**Page {result['page']} ({result['position']})**")
-                            
-                            # Text content
-                            st.markdown(f"> {result['text']}")
-                            
-                            # Expandable details
-                            with st.expander("🔍 Details"):
-                                col_a, col_b = st.columns(2)
-                                with col_a:
-                                    st.write(f"**Chunk ID:** `{result['chunk_id']}`")
-                                    st.write(f"**Position:** {result['position']}")
-                                with col_b:
-                                    st.write(f"**Bounding Box:**")
-                                    st.code(f"[{', '.join([f'{x:.1f}' for x in result['bbox']])}]")
-                            
-                            st.divider()
+                    # LLM-Synthesized Answer (if enabled)
+                    if st.session_state.use_llm_synthesis:
+                        st.divider()
+                        st.subheader("💬 AI-Generated Answer")
+                        
+                        with st.spinner(f"Generating answer with {st.session_state.selected_model}..."):
+                            answer, citations = synthesize_answer_with_llm(
+                                query, 
+                                results[:5],  # Use top 5 results for context
+                                st.session_state.selected_model
+                            )
+                        
+                        # Display the synthesized answer
+                        st.markdown(f"**Answer:** {answer}")
+                        
+                        # Show citations
+                        with st.expander("📚 Sources Used", expanded=False):
+                            for cite in citations:
+                                st.markdown(
+                                    f"**[Source {cite['source_num']}]** {cite['doc_name']}, "
+                                    f"Page {cite['page']} ({cite['position']})"
+                                )
+                                st.caption(cite['text'])
+                                st.divider()
+                        
+                        st.divider()
+                        st.caption("💡 Toggle 'Use AI Answer Synthesis' in the sidebar to see raw search results")
+                    
+                    # Raw Search Results
+                    else:
+                        st.subheader("🔍 Search Results")
+                    
+                    # Display each result as a card (show if no LLM synthesis, or in expander if LLM synthesis)
+                    if st.session_state.use_llm_synthesis:
+                        with st.expander("📄 View All Search Results", expanded=False):
+                            for i, result in enumerate(results, 1):
+                                _display_result_card(i, result)
+                    else:
+                        for i, result in enumerate(results, 1):
+                            _display_result_card(i, result)
                     
                     # Export option
                     if st.button("📥 Export Results to CSV"):
@@ -471,27 +616,47 @@ with tab3:
     ### 🔧 Technology Stack
     
     - **Snowflake Cortex Search**: Semantic search with automatic embeddings
+    - **Snowflake Cortex Complete**: LLM-powered answer synthesis (RAG pattern)
     - **Custom Python UDF**: Extracts text with bounding box coordinates using `pdfminer`
     - **Streamlit in Snowflake**: Interactive web interface
+    - **Snowflake Core API**: Modern, type-safe Python API
     - **Snowflake Native**: 100% within Snowflake, no external services
     
-    ### 📚 How It Works
+    ### 📚 How It Works (RAG Pattern)
     
     1. **Upload PDFs** to `@PDF_STAGE`
     2. **Process with UDF** to extract text + positions
     3. **Index with Cortex Search** for semantic search
-    4. **Query in this app** with natural language
-    5. **Get precise citations** with page and position
+    4. **User asks a question** in natural language
+    5. **Cortex Search retrieves** relevant chunks with citations
+    6. **LLM synthesizes** natural language answer (if enabled)
+    7. **Display answer + sources** with page and position
+    
+    ### 🤖 Two Modes
+    
+    **AI Answer Synthesis (Default):**
+    - LLM reads search results and generates a natural language answer
+    - Similar to ChatGPT, but with **exact citations**
+    - Uses Snowflake Cortex Complete (llama3.1-70b, mistral-large2, etc.)
+    - Best for: Quick answers to specific questions
+    
+    **Raw Search Results:**
+    - Shows individual text chunks ranked by relevance
+    - Good for: Exploring what's in documents, detailed research
+    - Toggle in sidebar: Turn off "Use AI Answer Synthesis"
     
     ### 🚀 Key Features
     
-    - ✅ Semantic search (understands meaning, not just keywords)
-    - ✅ Precise citations (page + position on page)
-    - ✅ Full bounding box coordinates
-    - ✅ Document filtering
-    - ✅ Page browsing
-    - ✅ Export results to CSV
-    - ✅ Search history
+    - ✅ **AI Answer Synthesis** - Natural language answers using LLM (RAG pattern)
+    - ✅ **Semantic search** - Understands meaning, not just keywords
+    - ✅ **Precise citations** - Page + position + bounding box coordinates
+    - ✅ **Multiple LLM models** - llama3.1-70b, mistral-large2, snowflake-arctic
+    - ✅ **Presigned URLs** - Click to view source PDFs
+    - ✅ **Document filtering** - Search specific documents
+    - ✅ **Page browsing** - View content by page
+    - ✅ **Export to CSV** - Download results
+    - ✅ **Debug mode** - View raw Cortex Search responses
+    - ✅ **Search history** - Track previous queries
     
     ### 📖 Setup Instructions
     
