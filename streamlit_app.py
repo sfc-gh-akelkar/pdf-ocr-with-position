@@ -1327,7 +1327,7 @@ if st.button("Search", type="primary", use_container_width=True) or query:
 
 st.divider()
 
-tab1, tab2, tab3, tab4 = st.tabs(["📖 Browse by Page", "🕒 Search History", "ℹ️ About", "🔧 Technical Deep Dive"])
+tab1, tab2, tab3 = st.tabs(["📖 Browse by Page", "🕒 Search History", "🔧 Technical Deep Dive"])
 
 with tab1:
     st.subheader("Browse Document by Page")
@@ -1372,80 +1372,6 @@ with tab2:
         st.info("No search history yet. Start searching to see your queries here.")
 
 with tab3:
-    st.subheader("About This Application")
-    
-    st.markdown("""
-    ### 🎯 What This Does
-    
-    This application provides **intelligent search** over clinical protocol PDFs with 
-    **audit-grade precision**. Every answer includes:
-    
-    - 📄 **Document name**
-    - 📍 **Page number**
-    - 🎯 **Position on page** (e.g., "top-right", "middle-center")
-    - 📦 **Bounding box coordinates** for exact location
-    
-    ### 🔧 Technology Stack
-    
-    - **Snowflake Cortex Search**: Semantic search with automatic embeddings
-    - **Snowflake Cortex AI Complete**: LLM-powered answer synthesis (RAG pattern)
-    - **Claude & Llama Models**: claude-4-sonnet, llama3.1-405b, llama4-maverick, and more
-    - **Custom Python UDF**: Extracts text with bounding box coordinates using `pdfminer`
-    - **Streamlit in Snowflake**: Interactive web interface
-    - **Snowflake Core API**: Modern, type-safe Python API
-    - **Snowflake Native**: 100% within Snowflake, no external services
-    
-    ### 📚 How It Works (RAG Pattern)
-    
-    1. **Upload PDFs** to `@PDF_STAGE`
-    2. **Process with UDF** to extract text + positions
-    3. **Index with Cortex Search** for semantic search
-    4. **User asks a question** in natural language
-    5. **Cortex Search retrieves** relevant chunks with citations
-    6. **LLM synthesizes** natural language answer (if enabled)
-    7. **Display answer + sources** with page and position
-    
-    ### 🤖 Two Modes
-    
-    **AI Answer Synthesis (Default):**
-    - LLM reads search results and generates a natural language answer
-    - Similar to ChatGPT, but with **exact citations**
-    - Uses Snowflake Cortex AI Complete with Claude 4 Sonnet (default) or Llama models
-    - Choose from: claude-4-sonnet, claude-3-7-sonnet, llama4-maverick, llama3.1-405b, and more
-    - Best for: Quick answers to specific questions
-    
-    **Raw Search Results:**
-    - Shows individual text chunks ranked by relevance
-    - Good for: Exploring what's in documents, detailed research
-    - Toggle in sidebar: Turn off "Use AI Answer Synthesis"
-    
-    ### 🚀 Key Features
-    
-    - ✅ **AI Answer Synthesis** - Natural language answers using LLM (RAG pattern)
-    - ✅ **Semantic search** - Understands meaning, not just keywords
-    - ✅ **Precise citations** - Page + position + bounding box coordinates
-    - ✅ **16 LLM models** - Claude 4 Sonnet, Claude Haiku 4.5, Llama 4 Maverick, GPT-5, and more
-    - ✅ **Presigned URLs** - Click to view source PDFs
-    - ✅ **Document filtering** - Search specific documents
-    - ✅ **Page browsing** - View content by page
-    - ✅ **Export to CSV** - Download results
-    - ✅ **Debug mode** - View raw Cortex Search responses
-    - ✅ **Search history** - Track previous queries
-    - ✅ **Professional UI** - Snowflake-branded design with animations
-    
-    ### 📖 Setup Instructions
-    
-    1. Run `setup.sql` to create database objects
-    2. Upload PDFs to `@PDF_STAGE`
-    3. Run `CALL process_new_pdfs();` to index documents
-    4. Start searching!
-    
-    ---
-    
-    **Need help?** Check the sidebar for available documents and metadata.
-    """)
-
-with tab4:
     st.subheader("🔧 Technical Deep Dive")
     
     st.markdown("""
