@@ -42,9 +42,16 @@ from snowflake.core import Root
 DATABASE_NAME = "SANDBOX"
 SCHEMA_NAME = "PDF_OCR"
 
+# Snowflake Brand Colors (following best practices)
+SNOWFLAKE_BLUE = "#29B5E8"
+SNOWFLAKE_DARK_BLUE = "#111827" 
+SNOWFLAKE_AQUA = "#00D4FF"
+SNOWFLAKE_WHITE = "#FFFFFF"
+SNOWFLAKE_LIGHT_GRAY = "#E8EEF2"
+
 st.set_page_config(
-    page_title="Clinical Protocol Q&A",
-    page_icon="📄",
+    page_title="Clinical Protocol Q&A - Snowflake Cortex",
+    page_icon="❄️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -61,6 +68,100 @@ cortex_search_service = root.databases[DATABASE_NAME].schemas[SCHEMA_NAME].corte
 # Note: Streamlit in Snowflake doesn't support USE SCHEMA statements
 # All queries use fully qualified names: DATABASE.SCHEMA.OBJECT
 # To use different database/schema, update the constants above
+
+# Professional Snowflake Styling (following best practices)
+st.markdown(f"""
+<style>
+    /* Main app styling */
+    .stApp {{
+        background-color: {SNOWFLAKE_WHITE};
+    }}
+    
+    /* Header styling */
+    .main-header {{
+        background: linear-gradient(135deg, {SNOWFLAKE_BLUE} 0%, {SNOWFLAKE_AQUA} 100%);
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }}
+    
+    /* Card styling for results */
+    .result-card {{
+        background: linear-gradient(to right, #F8FAFC 0%, #FFFFFF 100%);
+        border-left: 5px solid {SNOWFLAKE_BLUE};
+        padding: 20px;
+        border-radius: 12px;
+        margin: 15px 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }}
+    
+    .result-card:hover {{
+        box-shadow: 0 4px 12px rgba(41, 181, 232, 0.15);
+        transform: translateY(-2px);
+    }}
+    
+    /* AI Answer styling */
+    .ai-answer {{
+        background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+        border: 2px solid {SNOWFLAKE_AQUA};
+        padding: 25px;
+        border-radius: 15px;
+        margin: 20px 0;
+        box-shadow: 0 4px 8px rgba(0, 212, 255, 0.1);
+    }}
+    
+    /* Button styling */
+    .stButton>button {{
+        background: linear-gradient(135deg, {SNOWFLAKE_BLUE} 0%, {SNOWFLAKE_AQUA} 100%);
+        color: white;
+        border-radius: 8px;
+        border: none;
+        padding: 12px 28px;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(41, 181, 232, 0.3);
+    }}
+    
+    .stButton>button:hover {{
+        background: linear-gradient(135deg, {SNOWFLAKE_AQUA} 0%, {SNOWFLAKE_BLUE} 100%);
+        box-shadow: 0 4px 8px rgba(41, 181, 232, 0.4);
+        transform: translateY(-1px);
+    }}
+    
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {{
+        background-color: {SNOWFLAKE_LIGHT_GRAY};
+        border-right: 1px solid #D1D9E0;
+    }}
+    
+    [data-testid="stSidebar"] > div:first-child {{
+        background-color: {SNOWFLAKE_LIGHT_GRAY};
+    }}
+    
+    /* Citation styling */
+    .citation-box {{
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 12px;
+        margin: 8px 0;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 12px;
+    }}
+    
+    /* Metric styling */
+    [data-testid="stMetricValue"] {{
+        font-size: 28px;
+        color: {SNOWFLAKE_BLUE};
+        font-weight: 700;
+    }}
+</style>
+""", unsafe_allow_html=True)
 
 # ============================================================================
 # Helper Functions
@@ -273,26 +374,29 @@ def get_presigned_url(doc_name, expiration_seconds=360):
 
 
 def _display_result_card(result_num, result):
-    """Helper function to display a search result card."""
-    with st.container():
-        # Citation header
-        st.markdown(f"### 📌 Result {result_num}: {result['doc_name']}")
-        st.caption(f"**Page {result['page']} ({result['position']})**")
-        
-        # Text content
-        st.markdown(f"> {result['text']}")
-        
-        # Expandable details
-        with st.expander("🔍 Details"):
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.write(f"**Chunk ID:** `{result['chunk_id']}`")
-                st.write(f"**Position:** {result['position']}")
-            with col_b:
-                st.write(f"**Bounding Box:**")
-                st.code(f"[{', '.join([f'{x:.1f}' for x in result['bbox']])}]")
-        
-        st.divider()
+    """Helper function to display a search result card with professional styling."""
+    # Use styled card following Snowflake best practices
+    st.markdown(f"""
+    <div class="result-card">
+        <h4>📌 Result {result_num}: {result['doc_name']}</h4>
+        <p><strong>Page {result['page']} ({result['position']})</strong></p>
+        <blockquote style="margin: 15px 0; padding: 10px; background: #F8FAFC; border-left: 3px solid {SNOWFLAKE_BLUE};">
+            {result['text'][:300]}{'...' if len(result['text']) > 300 else ''}
+        </blockquote>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Expandable details
+    with st.expander("🔍 Details & Coordinates"):
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.write(f"**Chunk ID:** `{result['chunk_id']}`")
+            st.write(f"**Position:** {result['position']}")
+            st.write(f"**Full Text:** {result['text']}")
+        with col_b:
+            st.write(f"**Bounding Box:**")
+            bbox_str = f"[{', '.join([f'{x:.1f}' for x in result['bbox']])}]"
+            st.markdown(f'<div class="citation-box">{bbox_str}</div>', unsafe_allow_html=True)
 
 
 def synthesize_answer_with_llm(question, search_results, model_name='claude-3-5-sonnet'):
@@ -430,22 +534,31 @@ try:
         )
         
         if st.session_state.use_llm_synthesis:
+            # Comprehensive model list following Snowflake best practices
+            ai_complete_models = [
+                'claude-4-sonnet',
+                'claude-haiku-4-5',
+                'claude-sonnet-4-5', 
+                'claude-3-7-sonnet',
+                'claude-3-5-sonnet',
+                'llama4-maverick',
+                'llama4-scout',
+                'llama3.3-70b',
+                'llama3.1-405b',
+                'llama3.1-70b',
+                'llama3.1-8b',
+                'llama3-70b',
+                'llama3-8b',
+                'mistral-large2',
+                'openai-gpt-5',
+                'openai-gpt-5-mini'
+            ]
+            
             st.session_state.selected_model = st.sidebar.selectbox(
-                'Select LLM Model:',
-                options=[
-                    'claude-4-sonnet',
-                    'claude-3-7-sonnet',
-                    'claude-3-5-sonnet',
-                    'llama4-maverick',
-                    'llama3.3-70b',
-                    'llama3.1-405b',
-                    'llama3.1-70b',
-                    'llama3.1-8b',
-                    'llama3-70b',
-                    'llama3-8b'
-                ],
-                index=2,  # Default to claude-3-5-sonnet
-                help="Model for answer synthesis"
+                '🤖 Select LLM Model:',
+                options=ai_complete_models,
+                index=4,  # Default to claude-3-5-sonnet
+                help="Choose the AI model for answer synthesis. Claude models generally provide better quality for document Q&A."
             )
         
         # Debug toggle
@@ -468,8 +581,15 @@ except Exception as e:
 # Main Content - Search Interface
 # ============================================================================
 
-st.title("🔍 Clinical Protocol Q&A")
-st.markdown("Ask questions about your clinical protocols and get answers with **precise citations**.")
+# Professional header following Snowflake best practices
+st.markdown("""
+<div class="main-header">
+    <h1>❄️ Clinical Protocol Intelligence</h1>
+    <p>AI-Powered Document Q&A with Audit-Grade Citations | Powered by Snowflake Cortex</p>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("Ask questions about your clinical protocols and get **natural language answers** with **precise citations** including page numbers, positions, and exact bounding box coordinates.")
 
 # Search input
 col1, col2 = st.columns([4, 1])
@@ -527,17 +647,23 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                     # LLM-Synthesized Answer (if enabled)
                     if st.session_state.use_llm_synthesis:
                         st.divider()
-                        st.subheader("💬 AI-Generated Answer")
                         
-                        with st.spinner(f"Generating answer with {st.session_state.selected_model}..."):
+                        with st.spinner(f"🤖 Generating answer with {st.session_state.selected_model}..."):
                             answer, citations = synthesize_answer_with_llm(
                                 query, 
                                 results[:5],  # Use top 5 results for context
                                 st.session_state.selected_model
                             )
                         
-                        # Display the synthesized answer
-                        st.markdown(f"**Answer:** {answer}")
+                        # Display the synthesized answer in styled container
+                        st.markdown(f"""
+                        <div class="ai-answer">
+                            <h3>🤖 AI-Generated Answer</h3>
+                            <div style="font-size: 16px; line-height: 1.6; margin-top: 15px;">
+                                {answer}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
                         
                         st.caption("💡 **Precise citations below** - Each source includes page, position, and exact bounding box coordinates for audit-grade traceability.")
                         
@@ -554,7 +680,7 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                                 with col2:
                                     st.caption("**Bounding Box:**")
                                     bbox_str = f"[{cite['bbox'][0]:.1f}, {cite['bbox'][1]:.1f}, {cite['bbox'][2]:.1f}, {cite['bbox'][3]:.1f}]"
-                                    st.code(bbox_str, language=None)
+                                    st.markdown(f'<div class="citation-box">{bbox_str}</div>', unsafe_allow_html=True)
                                 st.divider()
                         
                         st.divider()
@@ -734,13 +860,14 @@ with tab3:
     - ✅ **AI Answer Synthesis** - Natural language answers using LLM (RAG pattern)
     - ✅ **Semantic search** - Understands meaning, not just keywords
     - ✅ **Precise citations** - Page + position + bounding box coordinates
-    - ✅ **Multiple LLM models** - Claude 4 Sonnet, Claude 3.7 Sonnet, Llama 4 Maverick, Llama 3.1 (405B, 70B, 8B)
+    - ✅ **16 LLM models** - Claude 4 Sonnet, Claude Haiku 4.5, Llama 4 Maverick, GPT-5, and more
     - ✅ **Presigned URLs** - Click to view source PDFs
     - ✅ **Document filtering** - Search specific documents
     - ✅ **Page browsing** - View content by page
     - ✅ **Export to CSV** - Download results
     - ✅ **Debug mode** - View raw Cortex Search responses
     - ✅ **Search history** - Track previous queries
+    - ✅ **Professional UI** - Snowflake-branded design with animations
     
     ### 📖 Setup Instructions
     
@@ -758,6 +885,19 @@ with tab3:
 # Footer
 # ============================================================================
 
-st.divider()
-st.caption("Powered by Snowflake Cortex Search | Built with Streamlit in Snowflake")
+# Professional footer following Snowflake best practices
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; padding: 30px; background: linear-gradient(135deg, #F8FAFC 0%, #E8EEF2 100%); border-radius: 12px; margin-top: 40px;'>
+    <p style='font-size: 18px; font-weight: 600; color: #1E293B; margin-bottom: 8px;'>
+        ❄️ Clinical Protocol Intelligence ❄️
+    </p>
+    <p style='color: #64748b; font-size: 14px; margin-bottom: 0;'>
+        Built with Snowflake Cortex AI | Powered by Streamlit in Snowflake
+    </p>
+    <p style='color: #64748b; font-size: 12px; margin-top: 8px;'>
+        🔍 Semantic Search + 🤖 AI Synthesis + 📍 Precise Citations
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
