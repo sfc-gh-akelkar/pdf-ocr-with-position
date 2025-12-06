@@ -171,32 +171,52 @@ def calculate_position_python(bbox_x0, bbox_y0, bbox_x1, bbox_y1, page_width, pa
     """
     Calculate human-readable position from bounding box coordinates.
     Pure Python version of the SQL function.
+    Handles both string and numeric inputs from Cortex Search.
     """
-    # Calculate center points
-    center_x = (bbox_x0 + bbox_x1) / 2
-    center_y = (bbox_y0 + bbox_y1) / 2
-    
-    # Calculate relative positions (0-1)
-    rel_x = center_x / page_width
-    rel_y = center_y / page_height
-    
-    # Determine vertical position (PDF coords: 0 at bottom)
-    if rel_y > 0.67:
-        vertical = "top"
-    elif rel_y < 0.33:
-        vertical = "bottom"
-    else:
-        vertical = "middle"
-    
-    # Determine horizontal position
-    if rel_x < 0.33:
-        horizontal = "left"
-    elif rel_x > 0.67:
-        horizontal = "right"
-    else:
-        horizontal = "center"
-    
-    return f"{vertical}-{horizontal}"
+    try:
+        # Convert all inputs to float (handles both string and numeric inputs)
+        bbox_x0 = float(bbox_x0) if bbox_x0 is not None else 0.0
+        bbox_y0 = float(bbox_y0) if bbox_y0 is not None else 0.0
+        bbox_x1 = float(bbox_x1) if bbox_x1 is not None else 0.0
+        bbox_y1 = float(bbox_y1) if bbox_y1 is not None else 0.0
+        page_width = float(page_width) if page_width is not None else 612.0
+        page_height = float(page_height) if page_height is not None else 792.0
+        
+        # Ensure we have valid dimensions
+        if page_width <= 0:
+            page_width = 612.0
+        if page_height <= 0:
+            page_height = 792.0
+        
+        # Calculate center points
+        center_x = (bbox_x0 + bbox_x1) / 2
+        center_y = (bbox_y0 + bbox_y1) / 2
+        
+        # Calculate relative positions (0-1)
+        rel_x = center_x / page_width
+        rel_y = center_y / page_height
+        
+        # Determine vertical position (PDF coords: 0 at bottom)
+        if rel_y > 0.67:
+            vertical = "top"
+        elif rel_y < 0.33:
+            vertical = "bottom"
+        else:
+            vertical = "middle"
+        
+        # Determine horizontal position
+        if rel_x < 0.33:
+            horizontal = "left"
+        elif rel_x > 0.67:
+            horizontal = "right"
+        else:
+            horizontal = "center"
+        
+        return f"{vertical}-{horizontal}"
+        
+    except (ValueError, TypeError, ZeroDivisionError) as e:
+        # Return default position if calculation fails
+        return "middle-center"
 
 
 def search_protocols(query, max_results=10, doc_filter=None):
@@ -263,7 +283,7 @@ def search_protocols(query, max_results=10, doc_filter=None):
     formatted_results = []
     for result in results_array:
         try:
-            # Handle both dict and object notation
+            # Handle both dict and object notation with type conversion
             if isinstance(result, dict):
                 bbox_x0 = result.get('bbox_x0', 0)
                 bbox_y0 = result.get('bbox_y0', 0)
@@ -271,6 +291,10 @@ def search_protocols(query, max_results=10, doc_filter=None):
                 bbox_y1 = result.get('bbox_y1', 0)
                 page_width = result.get('page_width', 612)
                 page_height = result.get('page_height', 792)
+                chunk_id = result.get('chunk_id', '')
+                doc_name = result.get('doc_name', '')
+                page = result.get('page', 0)
+                text = result.get('text', '')
             else:
                 # Handle object with attributes
                 bbox_x0 = getattr(result, 'bbox_x0', 0)
@@ -279,23 +303,42 @@ def search_protocols(query, max_results=10, doc_filter=None):
                 bbox_y1 = getattr(result, 'bbox_y1', 0)
                 page_width = getattr(result, 'page_width', 612)
                 page_height = getattr(result, 'page_height', 792)
+                chunk_id = getattr(result, 'chunk_id', '')
+                doc_name = getattr(result, 'doc_name', '')
+                page = getattr(result, 'page', 0)
+                text = getattr(result, 'text', '')
+            
+            # Convert coordinates to float (handles string inputs from Cortex Search)
+            try:
+                bbox_x0_float = float(bbox_x0) if bbox_x0 is not None else 0.0
+                bbox_y0_float = float(bbox_y0) if bbox_y0 is not None else 0.0
+                bbox_x1_float = float(bbox_x1) if bbox_x1 is not None else 0.0
+                bbox_y1_float = float(bbox_y1) if bbox_y1 is not None else 0.0
+                page_int = int(float(page)) if page is not None else 0
+            except (ValueError, TypeError):
+                # Skip this result if coordinate conversion fails
+                st.warning(f"Skipping result with invalid coordinates: bbox_x0={bbox_x0}, bbox_y0={bbox_y0}")
+                continue
             
             position = calculate_position_python(
-                bbox_x0, bbox_y0, bbox_x1, bbox_y1,
+                bbox_x0_float, bbox_y0_float, bbox_x1_float, bbox_y1_float,
                 page_width, page_height
             )
             
             formatted_results.append({
-                'chunk_id': result.get('chunk_id') if isinstance(result, dict) else getattr(result, 'chunk_id', ''),
-                'doc_name': result.get('doc_name') if isinstance(result, dict) else getattr(result, 'doc_name', ''),
-                'page': result.get('page') if isinstance(result, dict) else getattr(result, 'page', 0),
+                'chunk_id': str(chunk_id),
+                'doc_name': str(doc_name),
+                'page': page_int,
                 'position': position,
-                'text': result.get('text') if isinstance(result, dict) else getattr(result, 'text', ''),
-                'bbox': [bbox_x0, bbox_y0, bbox_x1, bbox_y1]
+                'text': str(text),
+                'bbox': [bbox_x0_float, bbox_y0_float, bbox_x1_float, bbox_y1_float]
             })
+            
         except Exception as e:
-            # Skip malformed results but log the error
-            st.warning(f"Skipping malformed result: {str(e)}")
+            # Skip malformed results but log the error with more detail
+            st.warning(f"Skipping malformed result: {str(e)} | Result type: {type(result)}")
+            if st.session_state.show_debug:
+                st.write("**Problematic result:**", result)
             continue
     
     return formatted_results, results_json
@@ -734,7 +777,7 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                     **Common causes:**
                     1. **Cortex Search service not found** - Verify `protocol_search` exists:
                        ```sql
-                       SHOW CORTEX SEARCH SERVICES LIKE 'protocol_search';
+                       SHOW CORTEX SEARCH SERVICES LIKE 'protocol_search' IN SCHEMA SANDBOX.PDF_OCR;
                        ```
                     
                     2. **No data in table** - Check if documents are processed:
@@ -742,17 +785,23 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                        SELECT COUNT(*) FROM SANDBOX.PDF_OCR.document_chunks;
                        ```
                     
-                    3. **Column mismatch** - Verify table has required columns:
+                    3. **Data type issues** - Check if coordinates are numeric:
+                       ```sql
+                       SELECT bbox_x0, bbox_y0, typeof(bbox_x0), typeof(bbox_y0) 
+                       FROM SANDBOX.PDF_OCR.document_chunks LIMIT 5;
+                       ```
+                    
+                    4. **Column mismatch** - Verify table has required columns:
                        ```sql
                        DESC TABLE SANDBOX.PDF_OCR.document_chunks;
                        ```
                     
-                    4. **Index needs refresh**:
+                    5. **Index needs refresh**:
                        ```sql
-                       ALTER CORTEX SEARCH SERVICE protocol_search REFRESH;
+                       ALTER CORTEX SEARCH SERVICE SANDBOX.PDF_OCR.protocol_search REFRESH;
                        ```
                     
-                    **Enable Debug Mode** in the sidebar to see the raw response.
+                    **Enable Debug Mode** in the sidebar to see the raw response and problematic results.
                     """)
     else:
         st.info("👆 Enter a question above to search")
