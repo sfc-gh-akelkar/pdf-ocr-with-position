@@ -1,9 +1,12 @@
 """
 Clinical Protocol Q&A - Streamlit in Snowflake App
 
-This app provides intelligent search over clinical protocol PDFs with precise citations.
+This app provides intelligent search over clinical protocol PDFs with AI-powered
+answer synthesis and precise citations.
 
 Features:
+- AI Answer Synthesis using Snowflake Cortex AI Complete (RAG pattern)
+- Multiple LLM models: Claude 4 Sonnet, Claude 3.7/3.5 Sonnet, Llama 4 Maverick, Llama 3.1 (405B, 70B, 8B)
 - Semantic search powered by Snowflake Cortex Search (using Core API)
 - Precise citations with page number and position (e.g., "Page 5, top-right")
 - Document browser and metadata
@@ -13,7 +16,9 @@ Features:
 - Debug mode for raw Cortex Search responses
 
 Technical Implementation:
+- RAG Pattern: Retrieval (Cortex Search) → Augmentation (Build Prompt) → Generation (AI Complete)
 - Uses Snowflake Core API (snowflake.core.Root) for type-safe Cortex Search access
+- SNOWFLAKE.CORTEX.AI_COMPLETE for LLM answer synthesis
 - Python dict filters instead of JSON string manipulation
 - Returns structured JSON responses for better error handling
 - Presigned URLs for secure document access
@@ -264,15 +269,15 @@ def _display_result_card(result_num, result):
         st.divider()
 
 
-def synthesize_answer_with_llm(question, search_results, model_name='llama3.1-70b'):
+def synthesize_answer_with_llm(question, search_results, model_name='claude-3-5-sonnet'):
     """
-    Use Snowflake Cortex Complete to synthesize a natural language answer
+    Use Snowflake Cortex AI Complete to synthesize a natural language answer
     from search results (RAG pattern).
     
     Args:
         question: User's question
         search_results: List of search results from Cortex Search
-        model_name: LLM model to use for synthesis
+        model_name: LLM model to use for synthesis (claude-4-sonnet, llama3.1-70b, etc.)
     
     Returns:
         Tuple of (synthesized_answer, source_citations)
@@ -318,10 +323,10 @@ Do not mention "the CONTEXT" in your answer - write naturally as if you're an ex
 
 Answer:"""
     
-    # Call Cortex Complete
+    # Call Cortex AI Complete
     try:
         sql = """
-            SELECT SNOWFLAKE.CORTEX.COMPLETE(?, ?) AS response
+            SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(?, ?) AS response
         """
         result = session.sql(sql, params=[model_name, prompt]).collect()
         
@@ -349,7 +354,7 @@ if 'use_llm_synthesis' not in st.session_state:
     st.session_state.use_llm_synthesis = True
 
 if 'selected_model' not in st.session_state:
-    st.session_state.selected_model = 'llama3.1-70b'
+    st.session_state.selected_model = 'claude-3-5-sonnet'
 
 # ============================================================================
 # Sidebar - Document Browser
@@ -400,8 +405,19 @@ try:
         if st.session_state.use_llm_synthesis:
             st.session_state.selected_model = st.sidebar.selectbox(
                 'Select LLM Model:',
-                options=['llama3.1-70b', 'llama3.1-8b', 'mistral-large2', 'snowflake-arctic'],
-                index=0,
+                options=[
+                    'claude-4-sonnet',
+                    'claude-3-7-sonnet',
+                    'claude-3-5-sonnet',
+                    'llama4-maverick',
+                    'llama3.3-70b',
+                    'llama3.1-405b',
+                    'llama3.1-70b',
+                    'llama3.1-8b',
+                    'llama3-70b',
+                    'llama3-8b'
+                ],
+                index=2,  # Default to claude-3-5-sonnet
                 help="Model for answer synthesis"
             )
         
@@ -616,7 +632,8 @@ with tab3:
     ### 🔧 Technology Stack
     
     - **Snowflake Cortex Search**: Semantic search with automatic embeddings
-    - **Snowflake Cortex Complete**: LLM-powered answer synthesis (RAG pattern)
+    - **Snowflake Cortex AI Complete**: LLM-powered answer synthesis (RAG pattern)
+    - **Claude & Llama Models**: claude-4-sonnet, llama3.1-405b, llama4-maverick, and more
     - **Custom Python UDF**: Extracts text with bounding box coordinates using `pdfminer`
     - **Streamlit in Snowflake**: Interactive web interface
     - **Snowflake Core API**: Modern, type-safe Python API
@@ -637,7 +654,8 @@ with tab3:
     **AI Answer Synthesis (Default):**
     - LLM reads search results and generates a natural language answer
     - Similar to ChatGPT, but with **exact citations**
-    - Uses Snowflake Cortex Complete (llama3.1-70b, mistral-large2, etc.)
+    - Uses Snowflake Cortex AI Complete with Claude 4 Sonnet (default) or Llama models
+    - Choose from: claude-4-sonnet, claude-3-7-sonnet, llama4-maverick, llama3.1-405b, and more
     - Best for: Quick answers to specific questions
     
     **Raw Search Results:**
@@ -650,7 +668,7 @@ with tab3:
     - ✅ **AI Answer Synthesis** - Natural language answers using LLM (RAG pattern)
     - ✅ **Semantic search** - Understands meaning, not just keywords
     - ✅ **Precise citations** - Page + position + bounding box coordinates
-    - ✅ **Multiple LLM models** - llama3.1-70b, mistral-large2, snowflake-arctic
+    - ✅ **Multiple LLM models** - Claude 4 Sonnet, Claude 3.7 Sonnet, Llama 4 Maverick, Llama 3.1 (405B, 70B, 8B)
     - ✅ **Presigned URLs** - Click to view source PDFs
     - ✅ **Document filtering** - Search specific documents
     - ✅ **Page browsing** - View content by page
