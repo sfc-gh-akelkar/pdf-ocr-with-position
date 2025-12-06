@@ -125,51 +125,77 @@ def search_protocols(query, max_results=10, doc_filter=None):
     ]
     
     # Execute Cortex Search using Core API (cleaner than SQL approach)
-    if doc_filter:
-        # Search with document filter
-        filter_obj = {"@eq": {"doc_name": doc_filter}}
-        response = cortex_search_service.search(
-            query=query,
-            columns=columns,
-            filter=filter_obj,
-            limit=max_results
-        )
-    else:
-        # Search without filter
-        response = cortex_search_service.search(
-            query=query,
-            columns=columns,
-            limit=max_results
-        )
-    
-    # Parse response JSON
-    results_json = response.json()
+    try:
+        if doc_filter:
+            # Search with document filter
+            filter_obj = {"@eq": {"doc_name": doc_filter}}
+            response = cortex_search_service.search(
+                query=query,
+                columns=columns,
+                filter=filter_obj,
+                limit=max_results
+            )
+        else:
+            # Search without filter
+            response = cortex_search_service.search(
+                query=query,
+                columns=columns,
+                limit=max_results
+            )
+        
+        # Parse response - response.json() returns a dict, not a string
+        results_json = response.json()
+        
+        # Handle case where results_json might be a string (shouldn't happen, but just in case)
+        if isinstance(results_json, str):
+            results_json = json.loads(results_json)
+        
+        # Extract results array
+        results_array = results_json.get('results', []) if isinstance(results_json, dict) else []
+        
+    except Exception as e:
+        # Return empty results with error info
+        st.error(f"Cortex Search API error: {str(e)}")
+        return [], {"error": str(e), "results": []}
     
     # Format results with positions
     formatted_results = []
-    for result in results_json.get('results', []):
-        position = calculate_position_python(
-            result['bbox_x0'],
-            result['bbox_y0'],
-            result['bbox_x1'],
-            result['bbox_y1'],
-            result['page_width'],
-            result['page_height']
-        )
-        
-        formatted_results.append({
-            'chunk_id': result['chunk_id'],
-            'doc_name': result['doc_name'],
-            'page': result['page'],
-            'position': position,
-            'text': result['text'],
-            'bbox': [
-                result['bbox_x0'],
-                result['bbox_y0'],
-                result['bbox_x1'],
-                result['bbox_y1']
-            ]
-        })
+    for result in results_array:
+        try:
+            # Handle both dict and object notation
+            if isinstance(result, dict):
+                bbox_x0 = result.get('bbox_x0', 0)
+                bbox_y0 = result.get('bbox_y0', 0)
+                bbox_x1 = result.get('bbox_x1', 0)
+                bbox_y1 = result.get('bbox_y1', 0)
+                page_width = result.get('page_width', 612)
+                page_height = result.get('page_height', 792)
+            else:
+                # Handle object with attributes
+                bbox_x0 = getattr(result, 'bbox_x0', 0)
+                bbox_y0 = getattr(result, 'bbox_y0', 0)
+                bbox_x1 = getattr(result, 'bbox_x1', 0)
+                bbox_y1 = getattr(result, 'bbox_y1', 0)
+                page_width = getattr(result, 'page_width', 612)
+                page_height = getattr(result, 'page_height', 792)
+            
+            position = calculate_position_python(
+                bbox_x0, bbox_y0, bbox_x1, bbox_y1,
+                page_width, page_height
+            )
+            
+            formatted_results.append({
+                'chunk_id': result.get('chunk_id') if isinstance(result, dict) else getattr(result, 'chunk_id', ''),
+                'doc_name': result.get('doc_name') if isinstance(result, dict) else getattr(result, 'doc_name', ''),
+                'page': result.get('page') if isinstance(result, dict) else getattr(result, 'page', 0),
+                'position': position,
+                'text': result.get('text') if isinstance(result, dict) else getattr(result, 'text', ''),
+                'bbox': [bbox_x0, bbox_y0, bbox_x1, bbox_y1]
+            })
+        except Exception as e:
+            # Skip malformed results but log the error
+            st.warning(f"Skipping malformed result: {str(e)}")
+            continue
     
     return formatted_results, results_json
 
@@ -470,7 +496,11 @@ if st.button("Search", type="primary", use_container_width=True) or query:
                 # Show debug info if enabled
                 if st.session_state.show_debug:
                     with st.sidebar.expander("🔍 Raw Cortex Search Response", expanded=False):
-                        st.json(raw_response)
+                        st.write("**Response Type:**", type(raw_response).__name__)
+                        if isinstance(raw_response, str):
+                            st.text(raw_response[:1000])  # Show first 1000 chars if string
+                        else:
+                            st.json(raw_response)
                 
                 # Add to search history
                 st.session_state.search_history.insert(0, {
@@ -570,7 +600,34 @@ if st.button("Search", type="primary", use_container_width=True) or query:
             
             except Exception as e:
                 st.error(f"Search error: {str(e)}")
-                st.code(str(e))
+                
+                # Provide helpful debugging info
+                with st.expander("🔍 Error Details & Troubleshooting"):
+                    st.code(str(e))
+                    st.markdown("""
+                    **Common causes:**
+                    1. **Cortex Search service not found** - Verify `protocol_search` exists:
+                       ```sql
+                       SHOW CORTEX SEARCH SERVICES LIKE 'protocol_search';
+                       ```
+                    
+                    2. **No data in table** - Check if documents are processed:
+                       ```sql
+                       SELECT COUNT(*) FROM SANDBOX.PDF_OCR.document_chunks;
+                       ```
+                    
+                    3. **Column mismatch** - Verify table has required columns:
+                       ```sql
+                       DESC TABLE SANDBOX.PDF_OCR.document_chunks;
+                       ```
+                    
+                    4. **Index needs refresh**:
+                       ```sql
+                       ALTER CORTEX SEARCH SERVICE protocol_search REFRESH;
+                       ```
+                    
+                    **Enable Debug Mode** in the sidebar to see the raw response.
+                    """)
     else:
         st.info("👆 Enter a question above to search")
 
