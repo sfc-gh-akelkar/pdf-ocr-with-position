@@ -957,22 +957,6 @@ if st.session_state.show_about:
     **Every step happens within your Snowflake environment - your data never leaves your control.**
     """)
     
-    st.markdown("---")
-    
-    # Getting Started
-    st.markdown("## 🚀 **Ready to Get Started?**")
-    
-    st.markdown("""
-    ### **Next Steps:**
-    
-    1. **📤 Upload your protocol PDFs** to the Snowflake stage
-    2. **⚙️ Run the automated processing** to extract text and coordinates  
-    3. **🔍 Start searching** with natural language questions
-    4. **📊 Experience the power** of AI-powered document intelligence
-    
-    **Questions? Want a personalized demo?** Contact your Snowflake representative to see how Clinical Protocol Intelligence can transform your document workflows.
-    """)
-    
     # Back to search button at bottom
     if st.button("🔍 **Start Searching Now**", type="primary", use_container_width=True):
         st.session_state.show_about = False
