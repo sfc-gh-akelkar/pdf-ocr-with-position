@@ -691,30 +691,24 @@ try:
         )
         
         if st.session_state.use_llm_synthesis:
-            # Comprehensive model list following Snowflake best practices
+            # Available LLM models for answer synthesis
             ai_complete_models = [
                 'claude-4-sonnet',
-                'claude-haiku-4-5',
-                'claude-sonnet-4-5', 
                 'claude-3-7-sonnet',
                 'claude-3-5-sonnet',
-                'llama4-maverick',
-                'llama4-scout',
-                'llama3.3-70b',
                 'llama3.1-405b',
-                'llama3.1-70b',
-                'llama3.1-8b',
-                'llama3-70b',
-                'llama3-8b',
+                'llama3.3-70b',
                 'mistral-large2',
-                'openai-gpt-5',
-                'openai-gpt-5-mini'
+                'openai-gpt-4.1',
+                'snowflake-arctic',
+                'openai-o4-mini',
+                'llama4-scout'
             ]
             
             st.session_state.selected_model = st.sidebar.selectbox(
                 '🤖 Select LLM Model:',
                 options=ai_complete_models,
-                index=4,  # Default to claude-3-5-sonnet
+                index=2,  # Default to claude-3-5-sonnet
                 help="Choose the AI model for answer synthesis. Claude models generally provide better quality for document Q&A."
             )
         
