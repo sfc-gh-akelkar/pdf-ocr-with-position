@@ -934,28 +934,179 @@ if st.session_state.show_about:
     st.markdown("---")
     
     # Technical Architecture
-    st.markdown("## 🏗️ **Technical Excellence**")
+    st.markdown("## 🏗️ **Technical Architecture**")
     
     st.markdown("""
-    ### **Snowflake-Native Architecture**
+    ### **Snowflake-Native Components**
     
-    Our solution leverages the full power of Snowflake's Data Cloud:
-    
-    - **🔍 Cortex Search**: Hybrid semantic + keyword search with auto-embedding generation
-    - **🤖 Cortex AI Complete**: Multiple LLM options (Claude, Llama, GPT, Mistral) for answer synthesis
-    - **🐍 Python UDFs**: Custom PDF processing with pdfminer for precise coordinate extraction
-    - **📊 Snowflake Core API**: Type-safe, Pythonic interaction with Snowflake services
-    - **🔐 Enterprise Security**: Native RBAC, audit logging, and data governance
-    - **⚡ Serverless Scaling**: No infrastructure management, automatic scaling
-    
-    ### **Data Flow**
-    ```
-    📄 PDF Upload → 🐍 Python UDF (Extract + Coordinates) → 🗄️ Structured Storage → 
-    🔍 Cortex Search (Semantic Index) → 🤖 AI Complete (Answer Synthesis) → 🎨 Streamlit UI
-    ```
-    
-    **Every step happens within your Snowflake environment - your data never leaves your control.**
+    Our solution is built entirely within Snowflake using these core components:
     """)
+    
+    # Architecture components in tabs
+    arch_tabs = st.tabs(["📄 PDF Processing", "🔍 Search & Indexing", "🤖 AI & Synthesis", "🎨 User Interface"])
+    
+    with arch_tabs[0]:
+        st.markdown("""
+        ### **PDF Text Extraction & Coordinate Mapping**
+        
+        **Python UDF: `pdf_txt_mapper_v3()`**
+        ```sql
+        CREATE FUNCTION pdf_txt_mapper_v3(scoped_file_url STRING)
+        RETURNS VARCHAR
+        LANGUAGE PYTHON
+        RUNTIME_VERSION = '3.12'
+        PACKAGES = ('snowflake-snowpark-python', 'pdfminer')
+        ```
+        
+        **Key Libraries:**
+        - **`pdfminer`**: Robust PDF parsing with layout analysis
+        - **`snowflake-snowpark-python`**: Native Snowflake file access
+        
+        **What it extracts:**
+        - Full text content from each text box
+        - Bounding box coordinates `[x0, y0, x1, y1]`
+        - Page dimensions (width × height)
+        - Page numbers and document metadata
+        
+        **Storage: `document_chunks` Table**
+        ```sql
+        CREATE TABLE document_chunks (
+            chunk_id VARCHAR PRIMARY KEY,
+            doc_name VARCHAR NOT NULL,
+            page INTEGER NOT NULL,
+            text VARCHAR,
+            bbox_x0 FLOAT, bbox_y0 FLOAT, bbox_x1 FLOAT, bbox_y1 FLOAT,
+            page_width FLOAT, page_height FLOAT,
+            extracted_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+        );
+        ```
+        """)
+    
+    with arch_tabs[1]:
+        st.markdown("""
+        ### **Semantic Search & Indexing**
+        
+        **Cortex Search Service: `protocol_search`**
+        ```sql
+        CREATE CORTEX SEARCH SERVICE protocol_search
+            ON text  -- Searchable content column
+            ATTRIBUTES page, doc_name, bbox_x0, bbox_y0, bbox_x1, bbox_y1, 
+                       page_width, page_height  -- Filterable attributes
+            WAREHOUSE = compute_wh
+            TARGET_LAG = '1 hour'
+            EMBEDDING_MODEL = 'snowflake-arctic-embed-l-v2.0'
+        ```
+        
+        **Key Features:**
+        - **Hybrid Search**: Combines semantic (vector) + keyword matching
+        - **Auto-Embedding**: Generates embeddings automatically using Arctic model
+        - **Real-time Indexing**: Updates within 1 hour of new data
+        - **Coordinate Preservation**: Bounding box data included in search results
+        
+        **Search Execution (Snowflake Core API):**
+        ```python
+        from snowflake.core import Root
+        root = Root(session)
+        svc = root.databases[DB].schemas[SCHEMA].cortex_search_services[SERVICE]
+        
+        response = svc.search(
+            query="dosing schedule",
+            columns=['text', 'page', 'doc_name', 'bbox_x0', 'bbox_y0', 'bbox_x1', 'bbox_y1'],
+            limit=5
+        )
+        ```
+        """)
+    
+    with arch_tabs[2]:
+        st.markdown("""
+        ### **AI Answer Synthesis (RAG Pattern)**
+        
+        **Cortex AI Complete: `SNOWFLAKE.CORTEX.AI_COMPLETE`**
+        ```sql
+        SELECT SNOWFLAKE.CORTEX.AI_COMPLETE(
+            'claude-3-5-sonnet',  -- Model selection
+            'You are an expert clinical protocol assistant...'  -- Prompt + context
+        ) AS response
+        ```
+        
+        **Available Models:**
+        - **Claude**: claude-4-sonnet, claude-haiku-4-5, claude-sonnet-4-5, claude-3-5-sonnet
+        - **Llama**: llama4-maverick, llama4-scout, llama3.1-405b, llama3.1-70b, llama3.1-8b
+        - **GPT**: openai-gpt-5, openai-gpt-5-mini
+        - **Mistral**: mistral-large2
+        
+        **RAG Implementation:**
+        1. **Retrieve**: Cortex Search finds relevant chunks with coordinates
+        2. **Augment**: Build context with source citations and locations
+        3. **Generate**: LLM synthesizes natural language answer with citations
+        
+        **Position Calculation:**
+        ```sql
+        CREATE FUNCTION calculate_position_description(
+            bbox_x0 FLOAT, bbox_y0 FLOAT, bbox_x1 FLOAT, bbox_y1 FLOAT,
+            page_width FLOAT, page_height FLOAT
+        ) RETURNS OBJECT
+        ```
+        Converts coordinates to human-readable positions like "top-right", "middle-center".
+        """)
+    
+    with arch_tabs[3]:
+        st.markdown("""
+        ### **Streamlit in Snowflake Application**
+        
+        **Framework**: Streamlit native integration with Snowflake
+        ```python
+        from snowflake.snowpark.context import get_active_session
+        session = get_active_session()  # No connection strings needed
+        ```
+        
+        **Key Features:**
+        - **Professional UI**: Snowflake-branded styling with CSS
+        - **Real-time Search**: Direct integration with Cortex Search
+        - **Performance Monitoring**: Execution logging and metrics tracking
+        - **Debug Capabilities**: Raw response inspection and troubleshooting
+        
+        **Security & Governance:**
+        - **Native RBAC**: Uses Snowflake's role-based access control
+        - **Audit Logging**: All queries and operations logged automatically
+        - **Data Residency**: All processing happens within Snowflake environment
+        - **No External APIs**: Zero data movement outside your Snowflake account
+        """)
+    
+    st.markdown("""
+    ### **Complete Data Flow**
+    
+    ```
+    📄 PDF Files in @PDF_STAGE
+         ↓
+    🐍 pdf_txt_mapper_v3() UDF
+         • Extracts text + bounding boxes using pdfminer
+         • Returns JSON with coordinates and page info
+         ↓
+    🗄️ document_chunks Table  
+         • Structured storage of text + coordinates
+         • Queryable with standard SQL
+         ↓
+    🔍 Cortex Search Service (protocol_search)
+         • Auto-generates embeddings (Arctic model)
+         • Indexes text for semantic + keyword search
+         • Preserves coordinate attributes
+         ↓
+    🤖 Cortex AI Complete
+         • RAG pattern: context from search results
+         • Multiple LLM options available
+         • Generates answers with source citations
+         ↓
+    🎨 Streamlit UI
+         • Professional interface with Snowflake branding
+         • Real-time search and AI synthesis
+         • Coordinate display and PDF links
+    ```
+    
+    **🔒 Security**: Every component runs within your Snowflake environment with native governance, RBAC, and audit logging.
+    """)
+    
+    st.markdown("---")
     
     # Back to search button at bottom
     if st.button("🔍 **Start Searching Now**", type="primary", use_container_width=True):
