@@ -626,7 +626,7 @@ if 'use_llm_synthesis' not in st.session_state:
     st.session_state.use_llm_synthesis = True
 
 if 'selected_model' not in st.session_state:
-    st.session_state.selected_model = 'claude-3-5-sonnet'
+    st.session_state.selected_model = 'claude-4-sonnet'
 
 if 'execution_log' not in st.session_state:
     st.session_state.execution_log = []
@@ -708,7 +708,7 @@ try:
             st.session_state.selected_model = st.sidebar.selectbox(
                 '🤖 Select LLM Model:',
                 options=ai_complete_models,
-                index=2,  # Default to claude-3-5-sonnet
+                index=0,  # Default to claude-4-sonnet
                 help="Choose the AI model for answer synthesis. Claude models generally provide better quality for document Q&A."
             )
         
