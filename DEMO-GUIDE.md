@@ -1,305 +1,445 @@
-# Demo Guide - Clinical Protocol Intelligence
+# Demo Guide - Clinical Protocol Intelligence with Streamlit
 
 ## 📋 Pre-Demo Checklist
 
-### ✅ Setup Requirements:
-1. **Notebook imported** - `pdf-ocr-with-position.ipynb` loaded in Snowflake
-2. **PDF uploaded** - `Prot_000.pdf` in `@PDF_STAGE`
-3. **Cells pre-run** - Run cells 1-16 BEFORE the demo (setup through agent creation)
-4. **Warehouse running** - `COMPUTE_WH` active
+### ✅ Setup Requirements (Run BEFORE demo):
+
+1. **Database setup complete**
+   - Run `setup.sql` to create all objects
+   - Verify: `SHOW CORTEX SEARCH SERVICES LIKE 'protocol_search';`
+
+2. **PDF uploaded and processed**
+   - Upload `Prot_000.pdf` to `@PDF_STAGE`
+   - Run: `CALL process_new_pdfs();`
+   - Verify: `SELECT COUNT(*) FROM document_chunks;` (should show > 0)
+
+3. **Streamlit app deployed**
+   - Deploy `streamlit_app.py` as Streamlit in Snowflake
+   - Test: Open app and verify document browser shows PDF
+
+4. **Warehouse running**
+   - `compute_wh` should be active and sized appropriately (Small/Medium)
+
 5. **Browser tabs open:**
-   - Snowflake notebook
-   - Snowflake Intelligence UI (for finale)
+   - Streamlit app (primary demo)
+   - SQL worksheet (for showing backend if needed)
 
-### 🎯 What to Pre-Run (BEFORE customer arrives):
-- Cell 3: `setup` (environment)
-- Cell 5: `create_udf` (PDF extraction function)
-- Cell 9: `load_data` (load the PDF)
-- Cell 13: `position_func` (position calculator)
-- Cell 14: `cortex_search` (Cortex Search service)
-- Cell 15: `agent_tools` (agent tools)
-- Cell 17: `create_agent` (the agent itself)
+### 🎯 What to Pre-Test:
 
-**Why pre-run?** These take time and aren't the "wow" moments. Save demo time for the exciting parts!
+- [ ] Open Streamlit app - loads without errors
+- [ ] Document browser shows uploaded PDF with metadata
+- [ ] Run test search: "dosing schedule" returns results
+- [ ] Results show proper citations (page + position)
+- [ ] Browse by page works
+- [ ] Export to CSV works
 
 ---
 
 ## 🎬 Demo Flow
 
-### **Part 1: The Story**
-
-**Start here:** Cell 1 (intro markdown)
+### **Opening Hook (2 minutes)**
 
 **YOU SAY:**
-> "Pharmaceutical companies process hundreds of clinical protocol PDFs. When regulatory teams ask questions like 'What's the dosing schedule in Protocol ABC-123?', they face these problems..."
+> "Pharmaceutical companies deal with hundreds of clinical protocol PDFs. When regulatory teams need to find specific information - like dosing schedules, inclusion criteria, or safety data - they face these challenges..."
 
-**SHOW:** The 4 pain points (manual search, no traceability, etc.)
+**SHOW:** Open a sample PDF in another tab and simulate manual search:
+- Ctrl+F for "dosing"
+- Multiple matches, no context
+- No way to know if you found everything
+- No citation for audit trail
 
 **YOU SAY:**
-> "We built a Snowflake-native solution that changes the game. Instead of hours of manual work, they get instant answers with PRECISE citations."
+> "What if instead of this manual process, they could just ask questions in natural language and get instant answers with **audit-grade citations** - not just page numbers, but exact positions like 'Page 5, top-right'?"
 
-**SHOW:** The example answer with Page 5, top-right, coordinates
-
-**KEY POINT:** Emphasize "PRECISE citations" - not just "Page 5", but exact coordinates. This is the differentiator.
+**TRANSITION:** "Let me show you what we built, 100% native in Snowflake."
 
 ---
 
-### **Part 2: PDF Extraction**
+### **Part 1: The Streamlit App (10 minutes)**
 
-**Jump to:** Cell 4 (extraction intro)
+**OPEN:** Streamlit app in full screen
+
+#### **1. Show the Interface (1 minute)**
 
 **YOU SAY:**
-> "The key to precise citations is capturing COMPLETE position data during extraction. Let me show you what we capture..."
+> "This is a Streamlit in Snowflake app. It's 100% native - no external services, no data leaving Snowflake. Everything runs inside your Snowflake environment with full governance."
 
-**SHOW:** The extraction output format with:
-- Page numbers
-- Full bounding boxes [x0, y0, x1, y1]
-- Page dimensions (for relative positioning)
+**POINT OUT:**
+- Clean, user-friendly interface
+- Document browser in sidebar
+- Search bar for natural language queries
+- Tabs for different features
 
-**RUN:** Cell 7 (`test_extract`)
+#### **2. Document Browser (2 minutes)**
 
-**WHILE IT RUNS, SAY:**
-> "Watch - we're extracting the PDF right now, capturing EXACT coordinates for every text element..."
+**SHOW:** Sidebar
 
-**WHEN RESULTS APPEAR:**
-> "See? Page number, text preview, and the full bounding box. This is what enables precise citations."
+**YOU SAY:**
+> "The document browser shows all available protocols. Notice it shows metadata automatically - total pages, number of text chunks extracted, when it was processed."
+
+**CLICK:** On a document in the sidebar
+
+**SHOW:** Metadata updates (pages, chunks, processed date)
+
+**KEY POINT:** "This metadata is automatically extracted. No manual cataloging needed."
+
+#### **3. Semantic Search Demo (5 minutes)**
+
+**YOU SAY:**
+> "Now let's ask a real question. I'm going to ask: 'What is the dosing schedule?'"
+
+**TYPE:** `What is the dosing schedule?`
+
+**CLICK:** Search
+
+**WAIT:** for results (should be < 2 seconds)
+
+**POINT OUT as results appear:**
+
+1. **Speed:** "Notice how fast that was - semantic search across the entire document"
+
+2. **Citations:** "Every result shows:"
+   - Document name (`Prot_000.pdf`)
+   - Page number (`Page 5`)
+   - Position on page (`top-right`, `middle-center`, etc.)
+
+3. **Relevance:** "These are semantically ranked - not just keyword matching. Cortex Search understands meaning."
+
+4. **Details:** Click "Details" expander
+   - Show chunk ID (for traceability)
+   - Show bounding box coordinates
+   - **KEY POINT:** "These coordinates could be used to highlight the exact text in a PDF viewer"
+
+**TRY ANOTHER QUERY:**
+
+**YOU SAY:**
+> "Let's try something more complex: 'What are the inclusion criteria?'"
+
+**TYPE:** `What are the inclusion criteria?`
+
+**SHOW:** Results with different pages and positions
+
+**POINT OUT:** "Notice it found relevant sections across multiple pages, all with precise locations."
+
+#### **4. Export Results (1 minute)**
+
+**CLICK:** "Export Results to CSV"
+
+**DOWNLOAD:** the CSV file
+
+**SHOW:** Open CSV in preview
+
+**YOU SAY:**
+> "Users can export results for documentation, regulatory submissions, or offline analysis. Every citation is preserved for audit trails."
+
+#### **5. Browse by Page (1 minute)**
+
+**CLICK:** "Browse by Page" tab
+
+**YOU SAY:**
+> "Users can also browse specific pages directly if they know where to look."
+
+**SELECT:** Document from sidebar (if not already selected)
+
+**ENTER:** Page number (e.g., 5)
+
+**CLICK:** "Load Page"
+
+**SHOW:** All text chunks from that page with positions
+
+**YOU SAY:**
+> "This shows all extracted content from the page, organized by position. Great for verification or detailed review."
 
 ---
 
-### **Part 3: Structured Storage**
+### **Part 2: The Technology Behind It (5 minutes)**
+
+**SWITCH TO:** SQL worksheet (optional, depending on technical audience)
 
 **YOU SAY:**
-> "We load this into a Snowflake table - fully queryable, governed, and ready for AI."
+> "Let me show you what makes this possible. It's all Snowflake-native."
 
-**RUN:** Cell 11 (`query_data`) - *Already has data from pre-run*
+#### **1. PDF Extraction UDF**
 
-**SHOW:** The structured table output
+**SHOW:** (don't run, just show code)
+```sql
+SHOW FUNCTIONS LIKE 'pdf_txt_mapper_v3';
+```
 
 **YOU SAY:**
-> "Now it's not just raw PDF data - it's structured, queryable, and indexed. This feeds our AI layer."
+> "We built a Python UDF using pdfminer that extracts text with full bounding box coordinates - the x,y coordinates of every text box on every page."
+
+**SHOW:** Example output structure (from `setup.sql` comments):
+```json
+{
+  "page": 5,
+  "bbox": [320, 680, 550, 720],
+  "page_width": 612,
+  "page_height": 792,
+  "txt": "Dosing is BID for 28 days..."
+}
+```
+
+**KEY POINT:** "This is the secret sauce - extracting not just text, but WHERE it appears on the page."
+
+#### **2. Document Chunks Table**
+
+**RUN:**
+```sql
+SELECT * FROM document_chunks LIMIT 5;
+```
+
+**YOU SAY:**
+> "All that extracted data goes into a structured table that we can query. Notice the bounding box columns - x0, y0, x1, y1 - that define exact rectangles around text."
+
+#### **3. Cortex Search**
+
+**SHOW:**
+```sql
+SHOW CORTEX SEARCH SERVICES LIKE 'protocol_search';
+```
+
+**YOU SAY:**
+> "Cortex Search automatically generates embeddings for semantic search. We don't manage vectors - Snowflake handles all of that. The service auto-refreshes as new documents are added."
+
+**RUN:** Direct Cortex Search query:
+```sql
+SELECT * FROM TABLE(
+    SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
+        'protocol_search',
+        '{"query": "dosing schedule", "columns": ["text", "page", "doc_name"], "limit": 3}'
+    )
+);
+```
+
+**YOU SAY:**
+> "This is what the Streamlit app calls under the hood. Direct semantic search with one function call."
+
+#### **4. Position Calculator**
+
+**SHOW/RUN:**
+```sql
+SELECT 
+    page,
+    calculate_position_description(bbox_x0, bbox_y0, bbox_x1, bbox_y1, page_width, page_height) AS position,
+    SUBSTR(text, 1, 50) AS text_preview
+FROM document_chunks
+LIMIT 5;
+```
+
+**YOU SAY:**
+> "We convert raw coordinates into human-readable positions like 'top-right' or 'middle-center'. Makes citations more intuitive for users."
 
 ---
 
-### **Part 4: AI Setup (Quick Overview)**
-
-**Jump to:** Cell 12 (AI header)
+### **Part 3: Automated Pipeline (3 minutes)**
 
 **YOU SAY:**
-> "Now for the AI magic. We built 4 components..." *(point to the list)*
+> "Now here's where it gets operationally powerful. This isn't a one-off demo - it's production-ready with automated processing."
 
-**DON'T RUN ANYTHING** - these are pre-run. Just explain:
+#### **1. Show Directory Monitoring**
 
-1. **Position calculator** - "Converts coordinates to 'top-right', 'middle-left', etc."
-2. **Cortex Search** - "Semantic search with auto-embeddings. No vector management!"
-3. **Agent tools** - "Custom functions for metadata and location search"
-4. **Cortex Agent** - "The orchestrator - Claude 4 Sonnet that picks the right tool"
+**RUN:**
+```sql
+SELECT * FROM DIRECTORY(@PDF_STAGE);
+```
 
 **YOU SAY:**
-> "All of this is already set up. Now watch what it can do..."
+> "Snowflake's directory tables automatically track files in stages. We can detect new PDFs as soon as they're uploaded."
+
+#### **2. Processing Procedure**
+
+**SHOW** (don't run, just show):
+```sql
+CALL process_new_pdfs();
+```
+
+**YOU SAY:**
+> "This stored procedure automatically:
+> 1. Finds new PDFs in the stage
+> 2. Extracts text with our UDF
+> 3. Loads it into the table
+> 4. Refreshes the Cortex Search index
+> 
+> It can be called manually or scheduled with Snowflake Tasks."
+
+#### **3. Scheduled Task**
+
+**RUN:**
+```sql
+SHOW TASKS LIKE 'process_pdfs_task';
+```
+
+**YOU SAY:**
+> "We created a task that runs every hour. Drop new PDFs in the stage, and within an hour, they're automatically indexed and searchable. Zero manual work."
 
 ---
 
-### **Part 5: THE WOW - Agent Demo** 🎯
+### **Part 4: The Snowflake-Native Advantage (3 minutes)**
 
-**This is the money moment!** Slow down, let it breathe.
-
-**Jump to:** Cell 18 (demo3_header)
+**SWITCH BACK TO:** Streamlit app
 
 **YOU SAY:**
-> "This is where it gets exciting. I'm going to ask the agent some questions. Watch how it responds..."
+> "What makes this solution different from external RAG tools?"
 
-**RUN:** Cell 19 (`test_content`) - "What is the dosing schedule?"
+**ENUMERATE benefits:**
 
-**WHILE IT RUNS:**
-> "The agent is now: 1) Understanding the question, 2) Picking the right tool - probably Cortex Search, 3) Synthesizing the answer..."
+1. **Zero Data Movement**
+   - "PDFs stay in Snowflake stages. No copying to vector databases or cloud storage."
 
-**WHEN RESULTS APPEAR:**
-*(Read the response out loud, especially the citation part)*
+2. **Native Governance**
+   - "Snowflake RBAC controls who can see what. Full audit logs. GxP compliant."
 
-**HIGHLIGHT:**
-> "Notice - Page 5, top-right, coordinates [320, 680, 550, 720]. This is PRECISE. A regulatory reviewer can go EXACTLY to that spot and verify."
+3. **No Infrastructure**
+   - "No servers to manage, no vector databases to maintain. Just SQL and Streamlit."
 
-**PAUSE** - Let it sink in.
+4. **Precise Citations**
+   - "Not just 'found on page 5' - we give exact positions with coordinates. Regulatory teams can verify every answer."
 
-**RUN:** Cell 20 (`test_metadata`) - "How many pages?"
+5. **Automatic Scaling**
+   - "Cortex Search and UDFs scale automatically. Works with 10 PDFs or 10,000."
 
-**YOU SAY:**
-> "Different question type - watch how it picks a different tool..."
-
-**WHEN RESULTS APPEAR:**
-> "See? It used the metadata tool, not search. The agent is smart about which tool to use."
-
-**RUN:** Cell 21 (`test_location`) - "What's on page 1, top-center?"
-
-**YOU SAY:**
-> "And here's a location-specific query..."
-
-**WHEN RESULTS APPEAR:**
-> "Used the location tool. Same precise citation format."
-
-**NOW THE CRESCENDO:**
-
-**Jump to:** Cell 23 (`live_demo`)
-
-**YOU SAY:**
-> "Now let's go off-script. What do YOU want to know about this protocol?"
-
-**TAKE SUGGESTIONS** from the audience. Edit Cell 23 with their question and run it.
-
-**SUGGESTED QUESTIONS IF THEY FREEZE:**
-- "What are the inclusion criteria?"
-- "Find mentions of adverse events"
-- "Compare primary and secondary endpoints"
-
-**RUN 2-3 LIVE QUESTIONS**
+**KEY POINT for Pharma/Regulated Industries:**
+> "For clinical trials and regulatory submissions, you need audit-grade traceability. This solution provides exact citations - page, position, coordinates - that meet FDA and EMA requirements for source data verification."
 
 ---
 
-### **Part 6: The Value Prop**
-
-**Jump to:** Cell 26 (summary)
+### **Finale: Value Summary (2 minutes)**
 
 **YOU SAY:**
-> "Let's talk about why this matters compared to external RAG solutions..."
+> "Let's recap what we've shown:"
 
-**SHOW:** The comparison table
+**SUMMARIZE:**
 
-**EMPHASIZE:**
-- ✅ **Zero data movement** - "PDFs never leave Snowflake"
-- ✅ **Precise coordinates** - "Not just page-level citations"
-- ✅ **SQL deployment** - "No Kubernetes, no infrastructure"
-- ✅ **Snowflake-managed** - "We don't maintain embeddings, models, or infrastructure"
+✅ **Instant Search**
+- "Seconds instead of hours to find information"
 
-**YOU SAY:**
-> "This is production-ready TODAY. No POC, no infrastructure setup."
+✅ **Precise Citations**
+- "Audit-grade traceability with page and position"
 
----
+✅ **100% Snowflake-Native**
+- "No external services, full governance, zero data movement"
 
-### **Part 7: The Finale**
+✅ **Automated Pipeline**
+- "Drop PDFs in a stage, get searchable in an hour"
 
-**OPEN NEW TAB:** Snowflake Intelligence UI
+✅ **User-Friendly Interface**
+- "Streamlit app for non-technical users, no SQL required"
 
-**RUN:** Cell 27 (`grant_access`) to show the grant command
-
-**YOU SAY:**
-> "For end users, they don't even see SQL. Let me show you..."
-
-**SWITCH TO INTELLIGENCE UI:**
-1. Select the `protocol_intelligence_agent`
-2. Type a question in the chat
-3. **Let the audience see the clean UX**
-
-**YOU SAY:**
-> "This is what regulatory reviewers see. Clean chat interface, zero code. They type questions, get answers with citations. That's it."
-
-**ASK FOR QUESTIONS**
+**CLOSE:**
+> "This isn't just a demo - it's production-ready code. We can deploy this in your environment today and have you searching your protocol library by tomorrow."
 
 ---
 
-## 🎤 Key Talking Points to Hit
+## 🎯 Talking Points by Audience
 
-### 1. **Precise Citations** (mention 5+ times)
-- Not just "Page 5"
-- Exact position: "top-right"
-- Coordinates: [320, 680, 550, 720]
-- **Why it matters:** Regulatory compliance, audit trails
+### For **Regulatory Affairs / Clinical Ops:**
+- Emphasize **audit-grade citations** and **traceability**
+- Mention **FDA/EMA compliance** for source data verification
+- Highlight **export to CSV** for regulatory submissions
+- Show **bounding box coordinates** for verification
 
-### 2. **Snowflake-Native** (mention 3+ times)
-- Zero data movement
-- Native governance (RBAC)
-- No external tools
-- **Why it matters:** Security, compliance, simplicity
+### For **IT / Data Engineering:**
+- Show **SQL setup** and **UDF code**
+- Emphasize **Snowflake-native** (no external dependencies)
+- Demo **automated pipeline** with tasks
+- Discuss **scalability** and **governance**
 
-### 3. **Complete Snowflake-Native Stack** (mention 2-3 times)
-- Custom UDF for extraction (Python + pdfminer)
-- Cortex Search for semantic retrieval
-- Cortex Agent for orchestration (Claude 4 Sonnet)
-- **Why it matters:** Everything stays in Snowflake, zero external dependencies
+### For **Business Users:**
+- Focus on **Streamlit app UI**
+- Keep it simple: "Ask questions, get answers"
+- Show **document browser** and **export**
+- Avoid technical details
 
-### 4. **Production-Ready** (mention 2-3 times)
-- Not a POC
-- Auto-processing
-- Snowflake-managed
-- **Why it matters:** Time to value
-
----
-
-## ⚠️ Common Pitfalls to Avoid
-
-### ❌ Don't:
-1. **Run cells 5, 9, 13-17 during demo** - Pre-run these! They're slow and not exciting
-2. **Rush the agent demo** - This is the wow moment, let it breathe
-3. **Skip the comparison table** - This sells the value vs. external tools
-4. **Forget to show Intelligence UI** - Non-technical users need to see this!
-5. **Over-explain the code** - Focus on WHAT it does, not HOW
-
-### ✅ Do:
-1. **Tell the story** - Pain point → Solution → Value
-2. **Show precise citations multiple times** - This is the differentiator
-3. **Take live questions** - Shows confidence and engagement
-4. **Emphasize "Snowflake-native"** - No data movement, native governance
-5. **End with Intelligence UI** - Beautiful UX for end users
+### For **Executives:**
+- **Speed:** "Hours → seconds for document research"
+- **Cost:** "No infrastructure, pay only for what you use"
+- **Risk:** "No data movement, full Snowflake governance"
+- **Value:** "Faster trial startup, faster regulatory submissions"
 
 ---
 
-## 🚨 Troubleshooting
+## 🛠️ Troubleshooting During Demo
 
-### If PDF extraction fails:
-- **Check:** Is `Prot_000.pdf` in `@PDF_STAGE`?
-- **Fix:** Upload via UI, then re-run cell 9
+### Issue: Streamlit app is slow
+**Fix:** Pre-warm the warehouse before the demo:
+```sql
+SELECT COUNT(*) FROM document_chunks;
+```
 
-### If agent doesn't respond:
-- **Check:** Is `COMPUTE_WH` running?
-- **Check:** Did cells 13-17 complete successfully?
-- **Fix:** Re-run the agent creation (cell 17)
+### Issue: No search results
+**Check:**
+- Document was processed: `SELECT COUNT(*) FROM document_chunks;`
+- Cortex Search is active: `SHOW CORTEX SEARCH SERVICES;`
+- Refresh index: `ALTER CORTEX SEARCH SERVICE protocol_search REFRESH;`
 
-### If you run out of time:
-- **Skip:** Cell 25 (automation) - nice to have, not critical
-- **Skip:** Extra live demo questions
-- **Keep:** Agent demo (cells 19-21) - this is non-negotiable!
+### Issue: Streamlit app error on load
+**Fix:** Restart the app or refresh the browser
 
----
-
-## 📊 Success Metrics
-
-**You nailed the demo if:**
-- ✅ Audience says "Wow!" when they see precise citations
-- ✅ Someone asks "Can we try this on our protocols?"
-- ✅ Non-technical stakeholders understand the value
-- ✅ Technical stakeholders are impressed by Snowflake-native approach
+### Issue: "No documents found" in sidebar
+**Fix:** 
+- Check data exists: `SELECT DISTINCT doc_name FROM document_chunks;`
+- Ensure schema is correct in app: `USE SCHEMA SANDBOX.PDF_OCR;`
 
 ---
 
-## 🎯 Customization Tips
+## 📊 Sample Questions for Different Use Cases
 
-### If audience is:
+### Clinical Protocols:
+```
+What is the dosing schedule?
+What are the inclusion criteria?
+List all adverse events
+What is the primary endpoint?
+How long is the treatment period?
+Describe the patient population
+What are the exclusion criteria?
+```
 
-**Non-technical (regulatory, clinical reviewers):**
-- Spend MORE time on agent demo (Part 5)
-- Emphasize Snowflake Intelligence UI
-- Skip technical details of UDF, Cortex Search internals
-- Focus on precise citations and ease of use
+### Regulatory Documents:
+```
+What are the safety monitoring procedures?
+Describe the data monitoring committee
+What are the stopping rules?
+Find information about informed consent
+```
 
-**Technical (data engineers, architects):**
-- Show the UDF code (cell 5) - explain enhancements
-- Discuss Cortex Search architecture
-- Emphasize zero vector management, auto-scaling
-- Show automation (cell 25)
-
-**Mixed audience:**
-- Follow the standard flow
-- Use non-technical language, but have technical answers ready
-- Emphasize both UX (Intelligence) and architecture (Snowflake-native)
+### Operational:
+```
+How many pages is this protocol?
+What documents mention chemotherapy?
+Find all references to FDA guidance
+```
 
 ---
 
-## 🎬 Final Checklist
+## 🎁 Leave-Behinds
 
-**Before you start:**
-- [ ] Cells 1-17 pre-run successfully
-- [ ] PDF uploaded to stage
-- [ ] Warehouse running
-- [ ] Snowflake Intelligence UI tab open
-- [ ] Water nearby (you'll be talking a lot!)
+After the demo, provide:
 
-**Good luck! You've got this! 🚀**
+1. **GitHub Repo** (if public)
+2. **setup.sql** - Complete setup script
+3. **streamlit_app.py** - App source code
+4. **README.md** - Full documentation
+5. **QUICKSTART.md** - Setup guide
+
+**Next Steps:**
+1. "Let's schedule a technical workshop to deploy in your environment"
+2. "What other document types would you like to add?"
+3. "Would you like to see this integrated with your eTMF system?"
+
+---
+
+## 💡 Advanced Features to Mention (If Time)
+
+- **Multi-document comparison**: "We could add side-by-side protocol comparison"
+- **PDF viewer integration**: "Bounding boxes could highlight source text in a PDF viewer"
+- **Document versioning**: "Track protocol amendments and changes over time"
+- **Custom metadata**: "Add trial phase, indication, sponsor info for richer filtering"
+- **Alerts**: "Get notified when specific terms appear in new protocols"
+
+---
+
+**Remember:** The key differentiator is **precise citations with positions**. Keep coming back to "Page 5, top-right, coordinates [320, 680, 550, 720]" - this is what competitors can't do.
+
+🎉 **Good luck with your demo!**
