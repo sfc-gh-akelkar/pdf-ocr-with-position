@@ -24,6 +24,10 @@ from snowflake.snowpark.context import get_active_session
 # Configuration
 # ============================================================================
 
+# IMPORTANT: Update these constants if you use different database/schema names
+DATABASE_NAME = "SANDBOX"
+SCHEMA_NAME = "PDF_OCR"
+
 st.set_page_config(
     page_title="Clinical Protocol Q&A",
     page_icon="📄",
@@ -34,8 +38,9 @@ st.set_page_config(
 # Get Snowpark session
 session = get_active_session()
 
-# Set context
-session.sql("USE SCHEMA SANDBOX.PDF_OCR").collect()
+# Note: Streamlit in Snowflake doesn't support USE SCHEMA statements
+# All queries use fully qualified names: DATABASE.SCHEMA.OBJECT
+# To use different database/schema, update the constants above and the SQL queries below
 
 # ============================================================================
 # Helper Functions
@@ -147,7 +152,7 @@ def get_available_documents():
             COUNT(*) as total_chunks,
             MIN(extracted_at) as first_extracted,
             MAX(extracted_at) as last_extracted
-        FROM document_chunks
+        FROM SANDBOX.PDF_OCR.document_chunks
         GROUP BY doc_name
         ORDER BY doc_name
     """
@@ -161,7 +166,7 @@ def get_page_content(doc_name, page_num):
             text,
             bbox_x0, bbox_y0, bbox_x1, bbox_y1,
             page_width, page_height
-        FROM document_chunks
+        FROM SANDBOX.PDF_OCR.document_chunks
         WHERE doc_name = '{doc_name}'
           AND page = {page_num}
         ORDER BY bbox_y0 DESC, bbox_x0

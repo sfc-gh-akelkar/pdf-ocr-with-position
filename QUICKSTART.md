@@ -273,16 +273,18 @@ CALL process_new_pdfs();
 SELECT COUNT(*) FROM document_chunks;
 ```
 
-### Issue: Streamlit app shows error
+### Issue: Streamlit app shows error "Unsupported statement type 'USE'"
 
-**Cause:** Wrong schema or missing permissions
+**Cause:** Streamlit in Snowflake doesn't support `USE SCHEMA` statements
 
-**Fix:** Check first few lines of `streamlit_app.py`:
+**Fix:** The app uses fully qualified names instead (e.g., `SANDBOX.PDF_OCR.document_chunks`). 
+If you used different database/schema names in setup.sql, update the constants at the top of `streamlit_app.py`:
 ```python
-session.sql("USE SCHEMA SANDBOX.PDF_OCR").collect()
+DATABASE_NAME = "YOUR_DATABASE"  # Change this
+SCHEMA_NAME = "YOUR_SCHEMA"      # Change this
 ```
 
-Ensure the schema matches your setup.
+Then update all SQL queries to use your database/schema names.
 
 ### Issue: Search is slow
 
