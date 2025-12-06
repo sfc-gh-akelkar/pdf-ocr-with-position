@@ -1109,7 +1109,7 @@ if st.session_state.show_about:
     st.markdown("---")
     
     # Back to search button at bottom (same as top)
-    if st.button("← Back to Search", type="primary"):
+    if st.button("← Back to Search", type="primary", key="back_to_search_bottom"):
         st.session_state.show_about = False
         st.rerun()
     
