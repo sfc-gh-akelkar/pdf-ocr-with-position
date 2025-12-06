@@ -933,49 +933,6 @@ if st.session_state.show_about:
     
     st.markdown("---")
     
-    # Competitive Advantages
-    st.markdown("## 🏆 **Competitive Advantages**")
-    
-    comp_col1, comp_col2, comp_col3 = st.columns(3)
-    
-    with comp_col1:
-        st.markdown("""
-        ### 🥇 **vs ChatGPT/External RAG**
-        
-        ✅ **Exact coordinates** (not just "page 5")  
-        ✅ **Zero data movement** (stays in Snowflake)  
-        ✅ **Enterprise governance** (RBAC, audit logs)  
-        ✅ **Regulatory compliant** (GxP validated)  
-        ✅ **No external API costs**  
-        ✅ **Consistent performance**  
-        """)
-    
-    with comp_col2:
-        st.markdown("""
-        ### 🥇 **vs Manual Document Review**
-        
-        ✅ **10,000x faster** (seconds vs hours)  
-        ✅ **100% coverage** (never miss anything)  
-        ✅ **Perfect consistency** (same results every time)  
-        ✅ **Audit-ready** (precise citations)  
-        ✅ **Scalable** (1 document or 1,000 documents)  
-        ✅ **No human error**  
-        """)
-    
-    with comp_col3:
-        st.markdown("""
-        ### 🥇 **vs Traditional OCR**
-        
-        ✅ **Semantic understanding** (AI comprehension)  
-        ✅ **Natural language queries** (ask questions)  
-        ✅ **Context awareness** (understands relationships)  
-        ✅ **Multi-document search** (cross-protocol analysis)  
-        ✅ **AI answer synthesis** (RAG pattern)  
-        ✅ **Enterprise integration**  
-        """)
-    
-    st.markdown("---")
-    
     # Success Metrics
     st.markdown("## 📈 **Proven Results**")
     
