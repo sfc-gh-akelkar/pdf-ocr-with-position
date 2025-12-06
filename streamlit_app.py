@@ -933,37 +933,6 @@ if st.session_state.show_about:
     
     st.markdown("---")
     
-    # Success Metrics
-    st.markdown("## 📈 **Proven Results**")
-    
-    success_col1, success_col2 = st.columns(2)
-    
-    with success_col1:
-        st.markdown("""
-        ### 🏥 **Regulatory Teams Report:**
-        
-        - 🚀 **90% faster** protocol review
-        - 📍 **100% citation accuracy** 
-        - ⚡ **80% faster** submission prep
-        - 🎯 **Zero audit findings** on source data
-        - 💰 **Significant cost savings** on external tools
-        - 🔒 **Enhanced compliance** confidence
-        """)
-    
-    with success_col2:
-        st.markdown("""
-        ### 🔬 **Clinical Operations:**
-        
-        - 📚 **Complete protocol coverage** (never miss sections)
-        - 🔍 **Instant cross-study analysis** (minutes vs days)
-        - 📊 **Consistent data extraction** (no human variability)
-        - 🏆 **Regulatory confidence** (audit-grade citations)
-        - 🚀 **Faster decision making** (immediate insights)
-        - 💡 **Knowledge democratization** (anyone can search)
-        """)
-    
-    st.markdown("---")
-    
     # Technical Architecture
     st.markdown("## 🏗️ **Technical Excellence**")
     
