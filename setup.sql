@@ -211,26 +211,32 @@ LANGUAGE SQL
 AS
 $$
 DECLARE
+    file_url VARCHAR;
+    file_name VARCHAR;
     processed_count INTEGER DEFAULT 0;
     result_message VARCHAR;
 BEGIN
-    -- Process each PDF in the stage that isn't already in document_chunks
-    FOR pdf_file IN (
+    -- Create a cursor for new PDF files
+    FOR pdf_record IN (
         SELECT RELATIVE_PATH 
         FROM DIRECTORY(@PDF_STAGE)
         WHERE RELATIVE_PATH LIKE '%.pdf'
         AND RELATIVE_PATH NOT IN (SELECT DISTINCT doc_name FROM document_chunks)
     ) DO
-        -- Extract text with bounding boxes
+        -- Get file details
+        file_name := pdf_record.RELATIVE_PATH;
+        file_url := build_scoped_file_url(@PDF_STAGE, file_name);
+        
+        -- Extract text with bounding boxes for this specific file
         INSERT INTO document_chunks (
             chunk_id, doc_name, page, text,
             bbox_x0, bbox_y0, bbox_x1, bbox_y1,
             page_width, page_height
         )
         SELECT 
-            pdf_file.RELATIVE_PATH || '_p' || value:page || '_c' || 
+            file_name || '_p' || value:page || '_c' || 
                 ROW_NUMBER() OVER (ORDER BY value:page, value:bbox[0], value:bbox[1]) AS chunk_id,
-            pdf_file.RELATIVE_PATH AS doc_name,
+            file_name AS doc_name,
             value:page::INTEGER AS page,
             value:txt::VARCHAR AS text,
             value:bbox[0]::FLOAT AS bbox_x0,
@@ -240,23 +246,25 @@ BEGIN
             value:page_width::FLOAT AS page_width,
             value:page_height::FLOAT AS page_height
         FROM (
-            SELECT PARSE_JSON(
-                pdf_txt_mapper_v3(
-                    build_scoped_file_url(@PDF_STAGE, pdf_file.RELATIVE_PATH)
-                )
-            ) AS parsed_data
+            SELECT PARSE_JSON(pdf_txt_mapper_v3(file_url)) AS parsed_data
         ),
         LATERAL FLATTEN(input => parsed_data) AS f;
         
         processed_count := processed_count + 1;
     END FOR;
     
-    -- Refresh Cortex Search index
+    -- Refresh Cortex Search index if we processed any files
     IF (processed_count > 0) THEN
         ALTER CORTEX SEARCH SERVICE protocol_search REFRESH;
     END IF;
     
-    result_message := 'Processed ' || processed_count || ' new PDF(s)';
+    -- Return result message
+    IF (processed_count > 0) THEN
+        result_message := 'Successfully processed ' || processed_count || ' new PDF(s)';
+    ELSE
+        result_message := 'No new PDFs to process';
+    END IF;
+    
     RETURN result_message;
 END;
 $$;
