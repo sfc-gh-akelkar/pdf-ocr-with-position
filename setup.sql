@@ -226,33 +226,35 @@ BEGIN
         -- Get file details from cursor record
         file_name := record.RELATIVE_PATH;
         
-        -- Extract text with bounding boxes for this specific file
-        -- Use bind variable (:file_name) to avoid variable scoping issues in nested queries
-        INSERT INTO SANDBOX.PDF_OCR.document_chunks (
-            chunk_id, doc_name, page, text,
-            bbox_x0, bbox_y0, bbox_x1, bbox_y1,
-            page_width, page_height
-        )
-        SELECT 
-            :file_name || '_p' || value:page || '_c' || 
-                ROW_NUMBER() OVER (ORDER BY value:page, value:bbox[0], value:bbox[1]) AS chunk_id,
-            :file_name AS doc_name,
-            value:page::INTEGER AS page,
-            value:txt::VARCHAR AS text,
-            value:bbox[0]::FLOAT AS bbox_x0,
-            value:bbox[1]::FLOAT AS bbox_y0,
-            value:bbox[2]::FLOAT AS bbox_x1,
-            value:bbox[3]::FLOAT AS bbox_y1,
-            value:page_width::FLOAT AS page_width,
-            value:page_height::FLOAT AS page_height
-        FROM (
-            SELECT PARSE_JSON(
-                SANDBOX.PDF_OCR.pdf_txt_mapper_v3(
-                    build_scoped_file_url(@SANDBOX.PDF_OCR.PDF_STAGE, :file_name)
-                )
-            ) AS parsed_data
-        ),
-        LATERAL FLATTEN(input => parsed_data) AS f;
+        -- Build the INSERT statement dynamically to avoid variable scoping issues
+        -- EXECUTE IMMEDIATE is needed because nested subqueries don't handle bind variables well
+        EXECUTE IMMEDIATE '
+            INSERT INTO SANDBOX.PDF_OCR.document_chunks (
+                chunk_id, doc_name, page, text,
+                bbox_x0, bbox_y0, bbox_x1, bbox_y1,
+                page_width, page_height
+            )
+            SELECT 
+                ? || ''_p'' || value:page || ''_c'' || 
+                    ROW_NUMBER() OVER (ORDER BY value:page, value:bbox[0], value:bbox[1]) AS chunk_id,
+                ? AS doc_name,
+                value:page::INTEGER AS page,
+                value:txt::VARCHAR AS text,
+                value:bbox[0]::FLOAT AS bbox_x0,
+                value:bbox[1]::FLOAT AS bbox_y0,
+                value:bbox[2]::FLOAT AS bbox_x1,
+                value:bbox[3]::FLOAT AS bbox_y1,
+                value:page_width::FLOAT AS page_width,
+                value:page_height::FLOAT AS page_height
+            FROM (
+                SELECT PARSE_JSON(
+                    SANDBOX.PDF_OCR.pdf_txt_mapper_v3(
+                        build_scoped_file_url(@SANDBOX.PDF_OCR.PDF_STAGE, ?)
+                    )
+                ) AS parsed_data
+            ),
+            LATERAL FLATTEN(input => parsed_data) AS f
+        ' USING (file_name, file_name, file_name);
         
         processed_count := processed_count + 1;
     END FOR;
