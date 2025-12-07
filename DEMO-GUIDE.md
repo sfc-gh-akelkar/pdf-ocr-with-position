@@ -53,19 +53,19 @@
 **🎤 Setup:**
 *"Now let me show you the real power - comparing across multiple protocol versions. This is where teams typically spend hours doing manual comparison."*
 
-**DEMO 1**: **"Compare the inclusion criteria across protocols"**
+**DEMO 1**: **"What biomarkers are measured in these studies?"**
 
-**ACTION**: Execute search, show AI synthesizing differences
+**ACTION**: Execute search, show AI synthesizing results
 
 **🎤 While results load:**
-*"The AI is now reading through hundreds of pages across three documents, extracting inclusion criteria, and identifying variations. This would take a clinical team hours of manual work."*
+*"The AI is now reading through hundreds of pages across three documents, extracting biomarker information, and synthesizing a comprehensive answer. This would take a clinical team hours of manual work."*
 
 **ACTION**: Show results with citations from multiple documents
 
 **🎤 Point out:**
 - Different document names in citations
 - Consistent coordinate format
-- AI identifying similarities AND differences
+- AI finding related information across all three protocols
 
 **DEMO 2**: **"What are the safety monitoring requirements?"**
 
@@ -87,7 +87,7 @@
 
 **ACTION**: Select **Prot_000_Secukinumab.pdf** from sidebar dropdown
 
-**DEMO**: **"What are the exclusion criteria?"**
+**DEMO**: **"What is the primary endpoint?"**
 
 **🎤 Point out:**
 *"Now it's only searching this specific version. Notice the results are still precise, still coordinate-tracked, but scoped to exactly what you asked for."*
@@ -231,23 +231,28 @@
 Use these if you need guaranteed good results:
 
 ### **Cross-Document Queries:**
-1. "What are the dosing schedules?"
-2. "Compare the inclusion criteria across protocols"
-3. "What are the safety monitoring requirements?"
-4. "What adverse events are tracked?"
+1. "What are the dosing schedules?" ✅ TESTED
+2. "What biomarkers are measured in these studies?" ✅ TESTED
+3. "What is the ECOG performance status requirement?" ✅ TESTED
+4. "What prior therapies are allowed?" ✅ TESTED
 
 ### **Single-Document Queries:**
 (Select specific document first)
-1. "What are the exclusion criteria?"
-2. "How long is the treatment period?"
-3. "What is the primary endpoint?"
-4. "What biomarkers are measured?"
+1. "What is the treatment duration?"
+2. "What is the primary endpoint?"
+3. "Describe the study design"
+4. "What is the response evaluation criteria?"
 
 ### **Complex Queries:**
-1. "What are the stopping rules?"
-2. "How is response evaluated?"
-3. "What are the contraindications?"
-4. "Describe the study design"
+1. "What is the NCT number and study title?"
+2. "What is the phase of this study?"
+3. "Who is the sponsor?"
+4. "What disease is being studied?"
+
+### **⚠️ AVOID These (Fragmentation Issues):**
+- "Compare inclusion criteria across protocols" - Too fragmented
+- "What are the exclusion criteria?" - Headers without content
+- "Compare safety requirements" - Section headers only
 
 ---
 
