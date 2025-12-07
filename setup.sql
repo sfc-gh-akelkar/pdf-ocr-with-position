@@ -224,7 +224,7 @@ BEGIN
         AND RELATIVE_PATH NOT IN (SELECT DISTINCT doc_name FROM document_chunks)
     ) DO
         -- Get file details
-        file_name := pdf_record.RELATIVE_PATH;
+        file_name := RELATIVE_PATH;
         file_url := build_scoped_file_url(@PDF_STAGE, file_name);
         
         -- Extract text with bounding boxes for this specific file

@@ -472,7 +472,7 @@ def get_presigned_url(doc_name, expiration_seconds=360):
 def upload_pdf_with_progress(uploaded_file):
     """
     Upload PDF file to Snowflake stage and process it with clear progress indication.
-    Displays progress in the main content area while upload is triggered from sidebar.
+    Takes over the entire main content area for clean upload experience.
     
     Args:
         uploaded_file: Streamlit UploadedFile object
@@ -484,10 +484,7 @@ def upload_pdf_with_progress(uploaded_file):
     import os
     import time
     
-    # Clear main content area and show upload progress
-    st.empty()  # Clear any existing content
-    
-    # Show processing overview in main area
+    # Show clean processing interface (header already shown above)
     st.markdown("## 📤 Processing Document Upload")
     st.info(f"🔄 **Processing {uploaded_file.name}...** This may take 30-60 seconds depending on document size.")
     
@@ -800,6 +797,9 @@ if 'performance_metrics' not in st.session_state:
 if 'show_about' not in st.session_state:
     st.session_state.show_about = False
 
+if 'uploading_file' not in st.session_state:
+    st.session_state.uploading_file = False
+
 # ============================================================================
 # Sidebar - Document Browser
 # ============================================================================
@@ -906,7 +906,9 @@ try:
                 
                 # Upload button
                 if st.sidebar.button("🚀 **Upload & Process**", use_container_width=True, type="primary"):
-                    upload_pdf_with_progress(uploaded_file)
+                    st.session_state.uploading_file = True
+                    st.session_state.current_upload_file = uploaded_file
+                    st.rerun()
         
         # About App Section
         st.sidebar.divider()
@@ -926,8 +928,26 @@ except Exception as e:
 # Main Content - Search Interface
 # ============================================================================
 
+# Check if file upload is in progress
+if st.session_state.uploading_file:
+    # Show only header and upload progress - clean interface
+    st.markdown("""
+    <div class="main-header">
+        <h1>❄️ Clinical Protocol Intelligence</h1>
+        <p>AI-Powered Document Q&A with Audit-Grade Citations | Powered by Snowflake Cortex</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Process the upload
+    upload_pdf_with_progress(st.session_state.current_upload_file)
+    
+    # Reset upload state after processing
+    st.session_state.uploading_file = False
+    if 'current_upload_file' in st.session_state:
+        del st.session_state.current_upload_file
+
 # Check if About App should be displayed
-if st.session_state.show_about:
+elif st.session_state.show_about:
     # About App Content
     st.markdown("""
     <div class="main-header">
