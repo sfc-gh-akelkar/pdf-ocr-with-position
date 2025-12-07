@@ -215,16 +215,17 @@ DECLARE
     file_name VARCHAR;
     processed_count INTEGER DEFAULT 0;
     result_message VARCHAR;
-BEGIN
-    -- Create a cursor for new PDF files
-    FOR pdf_record IN (
+    c1 CURSOR FOR 
         SELECT RELATIVE_PATH 
         FROM DIRECTORY(@PDF_STAGE)
         WHERE RELATIVE_PATH LIKE '%.pdf'
-        AND RELATIVE_PATH NOT IN (SELECT DISTINCT doc_name FROM document_chunks)
-    ) DO
-        -- Get file details
-        file_name := RELATIVE_PATH;
+        AND RELATIVE_PATH NOT IN (SELECT DISTINCT doc_name FROM document_chunks);
+BEGIN
+    -- Process new PDF files
+    OPEN c1;
+    FETCH c1 INTO file_name;
+    WHILE (SQLCODE = 0) DO
+        -- Build file URL
         file_url := build_scoped_file_url(@PDF_STAGE, file_name);
         
         -- Extract text with bounding boxes for this specific file
@@ -251,7 +252,11 @@ BEGIN
         LATERAL FLATTEN(input => parsed_data) AS f;
         
         processed_count := processed_count + 1;
-    END FOR;
+        
+        -- Fetch next file
+        FETCH c1 INTO file_name;
+    END WHILE;
+    CLOSE c1;
     
     -- Refresh Cortex Search index if we processed any files
     IF (processed_count > 0) THEN
