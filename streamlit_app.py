@@ -495,12 +495,15 @@ def upload_pdf_with_progress(uploaded_file):
         st.write("📤 **Step 1:** Uploading to Snowflake stage...")
         
         try:
-            # Create temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-                tmp_file.write(uploaded_file.getbuffer())
-                tmp_file_path = tmp_file.name
+            # Create temporary file with original filename to preserve name in stage
+            temp_dir = tempfile.gettempdir()
+            tmp_file_path = os.path.join(temp_dir, uploaded_file.name)
             
-            # Upload to Snowflake stage
+            # Write uploaded file to temp location
+            with open(tmp_file_path, 'wb') as f:
+                f.write(uploaded_file.getbuffer())
+            
+            # Upload to Snowflake stage (will preserve the original filename)
             result = session.file.put(
                 tmp_file_path,
                 f"@{DATABASE_NAME}.{SCHEMA_NAME}.PDF_STAGE",
@@ -538,8 +541,13 @@ def upload_pdf_with_progress(uploaded_file):
             
         except Exception as e:
             st.error(f"❌ Processing failed: {str(e)}")
-            if 'tmp_file_path' in locals() and os.path.exists(tmp_file_path):
-                os.unlink(tmp_file_path)
+            # Clean up temp file if it exists
+            if 'tmp_file_path' in locals():
+                try:
+                    if os.path.exists(tmp_file_path):
+                        os.unlink(tmp_file_path)
+                except:
+                    pass  # Ignore cleanup errors
             return False
     
     # Success message with celebration
