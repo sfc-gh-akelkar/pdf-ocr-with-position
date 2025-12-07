@@ -228,9 +228,9 @@ BEGIN
             page_width, page_height
         )
         SELECT 
-            :pdf_file.RELATIVE_PATH || '_p' || value:page || '_c' || 
+            pdf_file.RELATIVE_PATH || '_p' || value:page || '_c' || 
                 ROW_NUMBER() OVER (ORDER BY value:page, value:bbox[0], value:bbox[1]) AS chunk_id,
-            :pdf_file.RELATIVE_PATH AS doc_name,
+            pdf_file.RELATIVE_PATH AS doc_name,
             value:page::INTEGER AS page,
             value:txt::VARCHAR AS text,
             value:bbox[0]::FLOAT AS bbox_x0,
@@ -242,7 +242,7 @@ BEGIN
         FROM (
             SELECT PARSE_JSON(
                 pdf_txt_mapper_v3(
-                    build_scoped_file_url(@PDF_STAGE, :pdf_file.RELATIVE_PATH)
+                    build_scoped_file_url(@PDF_STAGE, pdf_file.RELATIVE_PATH)
                 )
             ) AS parsed_data
         ),
