@@ -225,18 +225,18 @@ BEGIN
     FOR record IN c1 DO
         -- Get file details from cursor record
         file_name := record.RELATIVE_PATH;
-        file_url := build_scoped_file_url(@SANDBOX.PDF_OCR.PDF_STAGE, file_name);
         
         -- Extract text with bounding boxes for this specific file
+        -- Use bind variable (:file_name) to avoid variable scoping issues in nested queries
         INSERT INTO SANDBOX.PDF_OCR.document_chunks (
             chunk_id, doc_name, page, text,
             bbox_x0, bbox_y0, bbox_x1, bbox_y1,
             page_width, page_height
         )
         SELECT 
-            file_name || '_p' || value:page || '_c' || 
+            :file_name || '_p' || value:page || '_c' || 
                 ROW_NUMBER() OVER (ORDER BY value:page, value:bbox[0], value:bbox[1]) AS chunk_id,
-            file_name AS doc_name,
+            :file_name AS doc_name,
             value:page::INTEGER AS page,
             value:txt::VARCHAR AS text,
             value:bbox[0]::FLOAT AS bbox_x0,
@@ -246,7 +246,11 @@ BEGIN
             value:page_width::FLOAT AS page_width,
             value:page_height::FLOAT AS page_height
         FROM (
-            SELECT PARSE_JSON(SANDBOX.PDF_OCR.pdf_txt_mapper_v3(file_url)) AS parsed_data
+            SELECT PARSE_JSON(
+                SANDBOX.PDF_OCR.pdf_txt_mapper_v3(
+                    build_scoped_file_url(@SANDBOX.PDF_OCR.PDF_STAGE, :file_name)
+                )
+            ) AS parsed_data
         ),
         LATERAL FLATTEN(input => parsed_data) AS f;
         
