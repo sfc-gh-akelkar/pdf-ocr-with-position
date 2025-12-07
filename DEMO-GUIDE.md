@@ -1,296 +1,330 @@
-# Clinical Protocol Intelligence - Demo Guide
-## 15-20 Minute Executive Demo
-
-### 🎯 **Demo Objectives**
-- Showcase AI-powered document Q&A with audit-grade citations
-- Demonstrate Snowflake-native architecture and capabilities
-- Highlight business value for pharmaceutical/clinical teams
-- Show technical sophistication without overwhelming business audience
+# Clinical Protocol Intelligence - 15-Minute Power Demo
+## WOW the Customer: Multi-Document Intelligence with Audit-Grade Precision
 
 ---
 
-## 📋 **Pre-Demo Checklist**
-- [ ] Streamlit app is running and accessible
-- [ ] Prot_000.pdf is uploaded and processed
-- [ ] Test search functionality with sample queries
-- [ ] Prepare backup questions if live demo fails
-- [ ] Have Technical Deep Dive tab ready for technical questions
+## 📋 **Pre-Demo Setup Checklist**
+- [x] **ALL 3 PDFs pre-loaded and processed:**
+  - Prot_000.pdf (Original protocol)
+  - Prot_000_Secukinumab.pdf 
+  - Prot_000_Ligelizumab.pdf
+- [ ] Streamlit app running and tested
+- [ ] Start with "All Documents" selected to showcase cross-document search
+- [ ] Have Technical Deep Dive tab pre-opened in background browser tab
+- [ ] Close all unnecessary tabs/windows for clean screen
+- [ ] Set LLM model to **Claude 4 Sonnet** (highest quality)
 
 ---
 
-## 🎬 **Demo Script & Talking Points**
+## 🎬 **15-Minute Power Demo Script**
 
-### **Opening Hook (2 minutes)**
+### **⏱️ SEGMENT 1: The Wow Moment (3 min)**
 
-**🎤 Speaker Notes:**
-*"Today I'm going to show you something that will fundamentally change how your teams work with clinical protocol documents. Instead of spending hours manually searching through 200-page PDFs, you'll get instant, AI-powered answers with audit-grade precision."*
+**🎤 Opening:**
+*"In the next 15 minutes, I'm going to show you something that will fundamentally change how you work with clinical protocols. We have three protocols loaded here, and I'm going to show you AI-powered intelligence that finds, synthesizes, and cites information across all of them—with the audit-grade precision you need."*
 
-**Key Points:**
-- **Problem**: Teams spend hours manually reviewing protocol documents
-- **Solution**: AI-powered search with exact citations
-- **Value**: 10x faster document review with regulatory compliance
+**ACTION**: Show main interface with sidebar showing 3 documents
 
-**Visual**: Show the main application interface
+**🎤 Transition:**
+*"Watch this. I'm going to ask a complex question across all three protocols."*
 
----
+**DEMO**: Type: **"What are the dosing schedules?"**
+- ⏱️ Wait for AI answer to appear (~3-5 seconds)
+- **Don't talk while it's processing** - let the speed impress them
 
-### **The Challenge (2 minutes)**
+**🎤 After results appear:**
+*"Notice what just happened. In 3 seconds:"*
+- ✅ *"AI searched across all THREE protocols"*
+- ✅ *"Found relevant sections using semantic understanding, not keywords"*
+- ✅ *"Synthesized a coherent answer using Claude 4 Sonnet"*
+- ✅ *"And gave me exact citations with coordinates for every claim"*
 
-**🎤 Speaker Notes:**
-*"Let me paint a picture of what your teams face today. When an FDA inspector asks 'Show me all mentions of adverse events in your protocol,' your team has to manually search through hundreds of pages, hoping they don't miss anything critical. The result? Hours of work, potential human error, and vague citations like 'mentioned somewhere on page 5.'"*
+**ACTION**: Scroll to show AI answer, then expand "Sources Used"
 
-**Click**: Navigate to "About This App" in sidebar
+**🎤 Highlight Citations:**
+*"Look at the precision here: Page 31, top-center, coordinates [126.0, 706.3, 464.0, 722.3]. An auditor can go directly to this exact location and verify the source. That's audit-grade precision."*
 
-**Key Points:**
-- **Manual Process**: Hours searching 200+ page PDFs
-- **Human Error**: Risk of missing critical information  
-- **Vague Citations**: "It's somewhere in the document"
-- **Regulatory Risk**: Insufficient audit trails
-
-**Visual**: Show the Problem/Solution comparison in About page
-
----
-
-### **The Solution Overview (3 minutes)**
-
-**🎤 Speaker Notes:**
-*"Our Clinical Protocol Intelligence solution changes everything. Watch this..."*
-
-**Click**: Back to main search interface
-
-**Demonstrate**: Type "What are the adverse events?" and execute search
-
-**Key Points:**
-- **AI Understanding**: Semantic search, not just keyword matching
-- **Instant Results**: Seconds instead of hours
-- **Precise Citations**: Page number + position + exact coordinates
-- **Audit-Grade**: Every answer is verifiable
-
-**🎤 Speaker Notes:**
-*"Notice what just happened. In 2 seconds, the AI found relevant information across the entire document, understood the context of 'adverse events,' and gave me exact citations. Page 184, top-center, with precise coordinates [72.0, 458.4, 543.3, 723.9]. An auditor can verify this instantly."*
+**💡 Key Message:** Speed + Intelligence + Precision = Transformative
 
 ---
 
-### **Core Capabilities Demo (5 minutes)**
+### **⏱️ SEGMENT 2: Cross-Document Intelligence (4 min)**
 
-#### **Capability 1: Natural Language Q&A**
+**🎤 Setup:**
+*"Now let me show you the real power - comparing across multiple protocol versions. This is where teams typically spend hours doing manual comparison."*
 
-**🎤 Speaker Notes:**
-*"Let me show you how natural this is. I can ask questions just like I would ask a colleague."*
+**DEMO 1**: **"Compare the inclusion criteria across protocols"**
 
-**Demonstrate**: 
-- "What is the dosing schedule?"
-- "What are the inclusion criteria?"
-- "How long is the treatment period?"
+**ACTION**: Execute search, show AI synthesizing differences
 
-**Key Points:**
-- **Natural Language**: Ask questions conversationally
-- **AI Synthesis**: LLM generates coherent answers
-- **Multiple Sources**: Combines information from different sections
+**🎤 While results load:**
+*"The AI is now reading through hundreds of pages across three documents, extracting inclusion criteria, and identifying variations. This would take a clinical team hours of manual work."*
 
-#### **Capability 2: Precise Citations**
+**ACTION**: Show results with citations from multiple documents
 
-**🎤 Speaker Notes:**
-*"But here's what makes this revolutionary for regulated industries - every single piece of information comes with audit-grade citations."*
+**🎤 Point out:**
+- Different document names in citations
+- Consistent coordinate format
+- AI identifying similarities AND differences
 
-**Show**: Expand "Sources Used (with exact coordinates)"
+**DEMO 2**: **"What are the safety monitoring requirements?"**
 
-**Key Points:**
-- **Page Numbers**: Exact page reference
-- **Position**: Human-readable (top-right, middle-center)
-- **Coordinates**: Machine-readable [x0, y0, x1, y1]
-- **Source Text**: Actual extracted content
+**ACTION**: Execute search
 
-#### **Capability 3: Multiple LLM Models**
+**🎤 Highlight:**
+*"Notice how it's pulling from different sections across documents - the AI understands semantic relationships. 'Safety monitoring' might be called 'adverse event tracking' or 'safety assessments' in different protocols, but the AI understands they're related."*
 
-**🎤 Speaker Notes:**
-*"We support multiple state-of-the-art AI models. Claude 4 Sonnet is our default for highest quality, but you can choose based on your needs."*
+**ACTION**: Click through to show different source documents in citations
 
-**Show**: Model selection dropdown in sidebar
-
-**Key Points:**
-- **Claude 4 Sonnet**: Highest quality (default)
-- **Multiple Options**: 10 different models available
-- **Flexibility**: Choose based on speed vs quality needs
+**💡 Key Message:** One query, three documents, comprehensive answer - automatically
 
 ---
 
-### **Business Value Deep Dive (4 minutes)**
+### **⏱️ SEGMENT 3: Document Filtering & Precision (2 min)**
 
-**🎤 Speaker Notes:**
-*"Let me show you the business impact this creates."*
+**🎤 Transition:**
+*"Now let's focus on a specific protocol version."*
 
-**Navigate**: Back to "About This App" → Use Cases tabs
+**ACTION**: Select **Prot_000_Secukinumab.pdf** from sidebar dropdown
 
-#### **Regulatory Compliance Use Case**
+**DEMO**: **"What are the exclusion criteria?"**
 
-**Click**: Regulatory Compliance tab
+**🎤 Point out:**
+*"Now it's only searching this specific version. Notice the results are still precise, still coordinate-tracked, but scoped to exactly what you asked for."*
 
-**🎤 Speaker Notes:**
-*"When an FDA inspector asks about adverse events, instead of this..."* [gesture to manual process] *"...you get this..."* [show example results]
+**ACTION**: Expand a citation to show bounding box coordinates
 
-**Key Points:**
-- **90% Faster**: Protocol review time
-- **100% Coverage**: Never miss critical information
-- **Zero Audit Findings**: Precise source verification
+**🎤 Deep dive on one citation:**
+*"Let me show you what makes this regulatory-ready. This citation shows:"*
+- 📄 *"Document name: Prot_000_Secukinumab.pdf"*
+- 📍 *"Page 45, middle-left"*
+- 🎯 *"Exact coordinates: [x0, y0, x1, y1]"*
+- 📝 *"Source text preview for verification"*
 
-#### **Cross-Study Analysis Use Case**
+*"You can feed these coordinates to downstream systems, create automated verification tools, or simply hand them to an auditor. The precision is there."*
 
-**Click**: Cross-Study Analysis tab
-
-**🎤 Speaker Notes:**
-*"For protocol comparison across studies, you can instantly verify consistency. Same dosing schedule across versions? Different inclusion criteria? You'll know immediately."*
-
-**Key Points:**
-- **Instant Comparison**: Across multiple documents
-- **Change Detection**: Identify protocol variations
-- **Compliance Verification**: Ensure consistency
+**💡 Key Message:** Precision at scale - every claim is verifiable
 
 ---
 
-### **Technical Excellence (3 minutes)**
+### **⏱️ SEGMENT 4: Technical Architecture Showcase (3 min)**
 
-**🎤 Speaker Notes:**
-*"Now, for our technical stakeholders, let me show you what makes this possible."*
+**🎤 Transition:**
+*"Let me show you what makes this possible - and why it's different from other AI solutions."*
 
-**Navigate**: Technical Deep Dive tab
+**ACTION**: Click **Technical Deep Dive** tab
 
-**Show**: Architecture overview and data flow
+**🎤 Architecture Overview:**
+*"This is 100% Snowflake-native. Every component runs inside your Snowflake environment:"*
 
-**Key Points:**
-- **100% Snowflake Native**: Data never leaves your environment
-- **Enterprise Security**: Native RBAC, audit logging
-- **No External APIs**: Zero data movement risk
-- **Scalable**: Serverless Snowflake infrastructure
+**SHOW**: Architecture diagram section
 
-**🎤 Speaker Notes:**
-*"This isn't just a demo - it's production-ready architecture. Every component runs within your Snowflake environment with enterprise governance."*
+**Key Points (rapid fire):**
+1. **PDF Processing**:
+   - *"PDFs uploaded to Snowflake stage - internal storage"*
+   - *"Python UDF extracts text with pdfminer - runs in Snowflake"*
+   - *"Bounding boxes captured at extraction time"*
 
-**Click**: Performance metrics (if available)
+2. **Search & Indexing**:
+   - *"Cortex Search Service - Snowflake's semantic search"*
+   - *"Auto-embedding with Arctic model"*
+   - *"Real-time indexing, no external services"*
 
-**Key Points:**
-- **Real-time Monitoring**: Performance tracking
-- **Cost Transparency**: Token usage and estimates
-- **Debug Capabilities**: Full execution visibility
+3. **AI Synthesis**:
+   - *"Cortex AI Complete - Snowflake's LLM service"*
+   - *"Multiple models: Claude, Llama, GPT, Mistral"*
+   - *"RAG pattern: Retrieval → Augmentation → Generation"*
 
----
+**ACTION**: Scroll to Performance Metrics
 
-### **Live Q&A Demo (2 minutes)**
+**🎤 Show Metrics:**
+*"Real-time performance monitoring. You can see:"*
+- Number of searches this session
+- Average response time
+- LLM calls and token usage
+- **Estimated cost** (if metrics available)
 
-**🎤 Speaker Notes:**
-*"Let me take a question from the audience and show you how this works in real-time."*
+*"Full transparency, full observability, full control."*
 
-**Suggested Questions** (if audience doesn't provide):
-- "What are the contraindications for this study?"
-- "How is response evaluated?"
-- "What biomarkers are being measured?"
-- "What are the stopping rules?"
-
-**Demonstrate**: 
-1. Type the question
-2. Show search execution
-3. Highlight AI answer quality
-4. Point out precise citations
-5. Show source verification
+**💡 Key Message:** Enterprise-grade architecture, not a black box
 
 ---
 
-### **Closing & Next Steps (1 minute)**
+### **⏱️ SEGMENT 5: Document Upload & Scale (1 min)**
 
-**🎤 Speaker Notes:**
-*"In just 15 minutes, you've seen how Clinical Protocol Intelligence transforms document review from hours of manual work to seconds of AI-powered analysis - all while maintaining audit-grade precision that regulators demand."*
+**🎤 Quick mention (don't demo):**
+*"Adding new documents is straightforward - there's a file uploader in the sidebar."*
 
-**Key Takeaways:**
-- **Immediate Impact**: 10x faster document review
-- **Regulatory Ready**: Audit-grade citations and traceability
-- **Snowflake Native**: Enterprise security and governance
-- **Production Ready**: Scalable, monitored, cost-transparent
+**ACTION**: Point to upload section in sidebar (don't click)
+
+**🎤 Talking points:**
+- *"Supports up to 50MB PDFs"*
+- *"Automatic text extraction and coordinate capture"*
+- *"Search index builds in background (~30 seconds)"*
+- *"Three-step process: Upload → Extract → Index"*
+
+*"We have three protocols loaded here, but you could have 30, 300, or 3,000. Cortex Search scales with Snowflake's serverless infrastructure."*
+
+**💡 Key Message:** Easy to expand, scales infinitely
+
+---
+
+### **⏱️ SEGMENT 6: Live Q&A + Model Selection (2 min)**
+
+**🎤 Engage audience:**
+*"Give me a question - anything about these protocols - and I'll show you the system in action."*
+
+**[If audience provides question]:**
+- Execute search
+- Highlight answer quality
+- Show citations
+- Verify one source
+
+**[If no question from audience]:**
+
+**DEMO**: **"What biomarkers are measured in these studies?"**
+
+**THEN**: Switch models mid-demo
+
+**ACTION**: 
+1. Show result with Claude 4 Sonnet
+2. Switch to **Llama 3.3 70B** in sidebar
+3. Re-run same query
+
+**🎤 Compare:**
+*"Same question, different AI model. You can choose based on:"*
+- ✅ *Quality vs speed*
+- ✅ *Cost considerations*
+- ✅ *Specific model strengths*
+
+*"Claude 4 is our default for highest quality, but you have 10 models to choose from."*
+
+**💡 Key Message:** Flexible, configurable, customizable
+
+---
+
+## 🎯 **Closing Power Statement (30 sec)**
+
+**🎤 Final words:**
+*"In 15 minutes, you've seen:"*
+
+1. **Speed**: *Seconds instead of hours*
+2. **Intelligence**: *AI that understands context, not just keywords*
+3. **Precision**: *Audit-grade citations with exact coordinates*
+4. **Scale**: *Search across multiple documents simultaneously*
+5. **Architecture**: *100% Snowflake-native, enterprise-ready*
+
+*"This isn't a prototype. This is production-ready AI for clinical protocol intelligence, running entirely within your Snowflake environment with full governance, security, and compliance."*
 
 **Next Steps:**
-- **Pilot Program**: Start with your most critical protocols
-- **Training Session**: Hands-on workshop for your team
-- **Technical Deep Dive**: Architecture review with IT team
-- **ROI Analysis**: Quantify time savings and cost benefits
+- Hands-on session with YOUR protocols
+- Technical architecture deep dive with your IT team
+- ROI analysis and pilot program design
+
+**🎤 Final ask:**
+*"Questions?"*
 
 ---
 
-## 🎯 **Audience-Specific Talking Points**
+## 🎯 **Suggested Demo Queries (Pre-tested)**
 
-### **For Business Stakeholders:**
-- Focus on time savings and regulatory compliance
-- Emphasize audit-grade citations and traceability
-- Highlight consistency and error reduction
-- Show cross-document analysis capabilities
+Use these if you need guaranteed good results:
 
-### **For Technical Stakeholders:**
-- Demonstrate Snowflake-native architecture
-- Show Technical Deep Dive tab extensively
-- Discuss security and governance features
-- Highlight performance monitoring and debugging
+### **Cross-Document Queries:**
+1. "What are the dosing schedules?"
+2. "Compare the inclusion criteria across protocols"
+3. "What are the safety monitoring requirements?"
+4. "What adverse events are tracked?"
 
-### **For Regulatory Affairs:**
-- Emphasize precise citations and coordinates
-- Show source verification capabilities
-- Discuss audit trail and compliance features
-- Demonstrate consistency checking across documents
+### **Single-Document Queries:**
+(Select specific document first)
+1. "What are the exclusion criteria?"
+2. "How long is the treatment period?"
+3. "What is the primary endpoint?"
+4. "What biomarkers are measured?"
 
----
-
-## 🚨 **Backup Plans**
-
-### **If Live Demo Fails:**
-1. **Screenshots**: Have key screenshots ready
-2. **Video Recording**: Pre-recorded demo walkthrough
-3. **Static Examples**: Prepared Q&A examples with results
-
-### **If Technical Questions Arise:**
-1. **Architecture Diagrams**: Technical Deep Dive tab
-2. **Code Examples**: Show actual implementation details
-3. **Performance Data**: Real metrics from Technical Deep Dive
-
-### **If Business Value Questions:**
-1. **Use Cases**: Detailed scenarios in About page
-2. **Success Metrics**: Quantified benefits
-3. **Competitive Advantages**: vs manual/external solutions
+### **Complex Queries:**
+1. "What are the stopping rules?"
+2. "How is response evaluated?"
+3. "What are the contraindications?"
+4. "Describe the study design"
 
 ---
 
-## 📝 **Post-Demo Follow-Up**
+## 🎯 **Timing Breakdown**
 
-### **Immediate Actions:**
-- [ ] Send demo recording and materials
-- [ ] Schedule technical deep dive session
-- [ ] Provide setup instructions and requirements
-- [ ] Share relevant use case documentation
-
-### **Next Meeting Agenda:**
-- [ ] Hands-on workshop with user's documents
-- [ ] Technical architecture review
-- [ ] Implementation timeline and milestones
-- [ ] Success metrics and KPIs definition
+| Segment | Time | Key Deliverable |
+|---------|------|----------------|
+| 1. Wow Moment | 3 min | Speed + Intelligence impression |
+| 2. Cross-Document | 4 min | Multi-doc search power |
+| 3. Precision | 2 min | Citation quality |
+| 4. Architecture | 3 min | Technical credibility |
+| 5. Upload & Scale | 1 min | Expansion capability |
+| 6. Live Q&A | 2 min | Interactivity + flexibility |
+| **TOTAL** | **15 min** | Complete picture |
 
 ---
 
-## 💡 **Pro Tips for Success**
+## 💡 **Key Differentiators to Emphasize**
 
-### **Demo Delivery:**
-- **Start with Impact**: Lead with business value, not features
-- **Show, Don't Tell**: Live demonstration beats slides
-- **Handle Errors Gracefully**: Have backup plans ready
-- **Engage Audience**: Ask for their specific questions
+### **vs. Manual Search:**
+- ⚡ 100x faster
+- 🎯 Never miss information
+- 📊 Consistent results
 
-### **Technical Confidence:**
-- **Know Your Limits**: Be honest about current capabilities
-- **Highlight Roadmap**: Show future enhancements
-- **Address Concerns**: Security, scalability, cost proactively
-- **Provide Evidence**: Real metrics and performance data
+### **vs. External AI Tools (ChatGPT, etc.):**
+- 🔒 Data never leaves Snowflake
+- 🎯 Audit-grade citations with coordinates
+- ⚖️ Regulatory compliant
+- 🏢 Enterprise governance
 
-### **Business Alignment:**
-- **Speak Their Language**: Use their terminology and pain points
-- **Quantify Value**: Specific time savings and cost reductions
-- **Address Objections**: Have answers for common concerns
-- **Create Urgency**: Show competitive advantage and ROI
+### **vs. Traditional Document Management:**
+- 🧠 Semantic understanding
+- 🔗 Cross-document intelligence
+- 🤖 AI synthesis, not just retrieval
 
 ---
 
-**🎯 Remember: This isn't just a technology demo - it's a business transformation presentation. Focus on outcomes, not features!**
+## 🚨 **Recovery Scripts**
+
+### **If search is slow:**
+*"As you can see, it's processing hundreds of pages in real-time. Still faster than manual review!"*
+
+### **If results aren't perfect:**
+*"Notice it still provides sources - you can always verify and refine. The goal is to accelerate your team, not replace human judgment."*
+
+### **If technical questions get deep:**
+*"Let me show you the Technical Deep Dive tab - we have full execution logs, performance metrics, and architecture details. We can schedule a dedicated technical session to go deeper."*
+
+---
+
+## 📸 **Screen Setup Checklist**
+
+**Before demo starts:**
+- [ ] Close unnecessary browser tabs
+- [ ] Clear any test queries from search box
+- [ ] Set sidebar to "All Documents"
+- [ ] Verify AI synthesis is enabled
+- [ ] Confirm Claude 4 Sonnet is selected
+- [ ] Pre-open Technical Deep Dive in background tab (Cmd+T)
+- [ ] Zoom browser to 110-125% for visibility
+- [ ] Turn off notifications/Slack/email
+
+---
+
+## 🎯 **Success Metrics**
+
+**You've nailed it if they say:**
+- ✅ *"Can we try this with our documents?"*
+- ✅ *"What's the timeline to get this running?"*
+- ✅ *"Can you show our IT team the architecture?"*
+- ✅ *"How much does this cost to run?"*
+
+**Warning signs to address:**
+- ⚠️ *"We already have [other tool]"* → Emphasize Snowflake-native advantage
+- ⚠️ *"Is this production-ready?"* → Show Technical Deep Dive metrics
+- ⚠️ *"How accurate is the AI?"* → Emphasize citations allow verification
+
+---
+
+**🚀 Remember: You're not selling technology, you're demonstrating transformation. Keep it fast, keep it impressive, keep it real!**
