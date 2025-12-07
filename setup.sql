@@ -217,19 +217,18 @@ DECLARE
     result_message VARCHAR;
     c1 CURSOR FOR 
         SELECT RELATIVE_PATH 
-        FROM DIRECTORY(@PDF_STAGE)
+        FROM DIRECTORY(@SANDBOX.PDF_OCR.PDF_STAGE)
         WHERE RELATIVE_PATH LIKE '%.pdf'
-        AND RELATIVE_PATH NOT IN (SELECT DISTINCT doc_name FROM document_chunks);
+        AND RELATIVE_PATH NOT IN (SELECT DISTINCT doc_name FROM SANDBOX.PDF_OCR.document_chunks);
 BEGIN
-    -- Process new PDF files
-    OPEN c1;
-    FETCH c1 INTO file_name;
-    WHILE (SQLCODE = 0) DO
-        -- Build file URL
-        file_url := build_scoped_file_url(@PDF_STAGE, file_name);
+    -- Process new PDF files using cursor-based FOR loop (Snowflake Scripting recommended pattern)
+    FOR record IN c1 DO
+        -- Get file details from cursor record
+        file_name := record.RELATIVE_PATH;
+        file_url := build_scoped_file_url(@SANDBOX.PDF_OCR.PDF_STAGE, file_name);
         
         -- Extract text with bounding boxes for this specific file
-        INSERT INTO document_chunks (
+        INSERT INTO SANDBOX.PDF_OCR.document_chunks (
             chunk_id, doc_name, page, text,
             bbox_x0, bbox_y0, bbox_x1, bbox_y1,
             page_width, page_height
@@ -247,20 +246,16 @@ BEGIN
             value:page_width::FLOAT AS page_width,
             value:page_height::FLOAT AS page_height
         FROM (
-            SELECT PARSE_JSON(pdf_txt_mapper_v3(file_url)) AS parsed_data
+            SELECT PARSE_JSON(SANDBOX.PDF_OCR.pdf_txt_mapper_v3(file_url)) AS parsed_data
         ),
         LATERAL FLATTEN(input => parsed_data) AS f;
         
         processed_count := processed_count + 1;
-        
-        -- Fetch next file
-        FETCH c1 INTO file_name;
-    END WHILE;
-    CLOSE c1;
+    END FOR;
     
     -- Refresh Cortex Search index if we processed any files
     IF (processed_count > 0) THEN
-        ALTER CORTEX SEARCH SERVICE protocol_search REFRESH;
+        ALTER CORTEX SEARCH SERVICE SANDBOX.PDF_OCR.protocol_search REFRESH;
     END IF;
     
     -- Return result message
