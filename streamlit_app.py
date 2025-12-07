@@ -526,14 +526,15 @@ def upload_pdf_with_progress(uploaded_file):
             st.write("🔍 **Step 3:** Building search index...")
             st.caption("Creating semantic embeddings for AI-powered search")
             
-            # Optional: Refresh search index (will happen automatically anyway)
+            # Trigger search index refresh (asynchronous - happens in background)
             try:
                 session.sql(f"ALTER CORTEX SEARCH SERVICE {DATABASE_NAME}.{SCHEMA_NAME}.protocol_search REFRESH").collect()
+                st.write("✅ **Step 3 Complete:** Index refresh triggered!")
+                st.caption("⏱️ Index builds in background (usually ready in 10-30 seconds)")
             except Exception as e:
                 # Index refresh might not be immediately necessary - it will happen automatically
-                pass
-            
-            st.write("✅ **Step 3 Complete:** Document indexed and ready!")
+                st.write("✅ **Step 3 Complete:** Using automatic index refresh")
+                st.caption(f"⏱️ Index will update within 1 hour (TARGET_LAG setting)")
             
         except Exception as e:
             st.error(f"❌ Processing failed: {str(e)}")
@@ -542,7 +543,8 @@ def upload_pdf_with_progress(uploaded_file):
             return False
     
     # Success message with celebration
-    st.success("🎉 **Document successfully processed and ready for AI-powered search!**")
+    st.success("🎉 **Document successfully processed!**")
+    st.info("📝 **Text extracted and stored** — Search index is building in the background (ready in ~30 seconds)")
     
     # Show processing summary
     try:
