@@ -589,8 +589,15 @@ def upload_pdf_with_progress(uploaded_file):
     - 🔧 **View processing details** in the Technical Deep Dive tab
     """)
     
-    # Auto-refresh after delay to show new document in sidebar
-    time.sleep(3)
+    # Reset upload state BEFORE rerun to prevent infinite loop
+    st.session_state.uploading_file = False
+    if 'current_upload_file' in st.session_state:
+        del st.session_state.current_upload_file
+    
+    # Brief pause for user to see completion message
+    time.sleep(2)
+    
+    # Refresh to show new document in sidebar
     st.rerun()
     
     return True
@@ -938,13 +945,8 @@ if st.session_state.uploading_file:
     </div>
     """, unsafe_allow_html=True)
     
-    # Process the upload
+    # Process the upload (state reset happens inside the function before rerun)
     upload_pdf_with_progress(st.session_state.current_upload_file)
-    
-    # Reset upload state after processing
-    st.session_state.uploading_file = False
-    if 'current_upload_file' in st.session_state:
-        del st.session_state.current_upload_file
 
 # Check if About App should be displayed
 elif st.session_state.show_about:
