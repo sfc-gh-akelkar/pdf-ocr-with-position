@@ -523,7 +523,12 @@ def upload_pdf_with_progress(uploaded_file):
             # Call the stored procedure to process new PDFs
             proc_result = session.sql(f"CALL {DATABASE_NAME}.{SCHEMA_NAME}.process_new_pdfs()").collect()
             
-            st.write("✅ **Step 2 Complete:** Text extraction finished")
+            # Show the procedure result message
+            if proc_result and len(proc_result) > 0:
+                proc_message = proc_result[0][0]  # Get the return message
+                st.write(f"✅ **Step 2 Complete:** {proc_message}")
+            else:
+                st.write("✅ **Step 2 Complete:** Text extraction finished")
             
             # Step 3: Update Search Index
             st.write("🔍 **Step 3:** Building search index...")
@@ -540,7 +545,41 @@ def upload_pdf_with_progress(uploaded_file):
                 st.caption(f"⏱️ Index will update within 1 hour (TARGET_LAG setting)")
             
         except Exception as e:
-            st.error(f"❌ Processing failed: {str(e)}")
+            error_msg = str(e)
+            st.error(f"❌ Processing failed: {error_msg}")
+            
+            # Show helpful debugging info
+            with st.expander("🔍 Debug Information"):
+                st.write("**Error details:**")
+                st.code(error_msg)
+                
+                # Check if it's a stored procedure error
+                if "process_new_pdfs" in error_msg.lower():
+                    st.write("**Issue:** The stored procedure failed. Check:")
+                    st.code("""
+-- Verify procedure exists:
+SHOW PROCEDURES LIKE 'process_new_pdfs' IN SCHEMA SANDBOX.PDF_OCR;
+
+-- Check recent errors:
+SELECT query_text, error_message 
+FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY())
+WHERE query_text ILIKE '%process_new_pdfs%'
+ORDER BY start_time DESC LIMIT 5;
+                    """, language="sql")
+                else:
+                    st.write("Run these debug queries:")
+                    st.code("""
+-- Check if file uploaded:
+SELECT * FROM DIRECTORY(@SANDBOX.PDF_OCR.PDF_STAGE) 
+ORDER BY LAST_MODIFIED DESC LIMIT 5;
+
+-- Check procedure calls:
+SELECT query_text, execution_status, error_message
+FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY())
+WHERE query_text ILIKE '%process_new_pdfs%'
+ORDER BY start_time DESC LIMIT 5;
+                    """, language="sql")
+            
             # Clean up temp file if it exists
             if 'tmp_file_path' in locals():
                 try:
