@@ -28,15 +28,15 @@
 **🎤 Transition:**
 *"Watch this. I'm going to ask a complex question across all three protocols."*
 
-**DEMO**: Type: **"What are the dosing schedules?"**
+**DEMO**: Type: **"What is the dosing schedule for nivolumab?"**
 - ⏱️ Wait for AI answer to appear (~3-5 seconds)
 - **Don't talk while it's processing** - let the speed impress them
 
 **🎤 After results appear:**
 *"Notice what just happened. In 3 seconds:"*
 - ✅ *"AI searched across all THREE protocols"*
-- ✅ *"Found relevant sections using semantic understanding, not keywords"*
-- ✅ *"Synthesized a coherent answer using Claude 4 Sonnet"*
+- ✅ *"Found the dosing information: Nivolumab 3 mg/kg Q2W"*
+- ✅ *"Synthesized a clear answer using Claude 4 Sonnet"*
 - ✅ *"And gave me exact citations with coordinates for every claim"*
 
 **ACTION**: Scroll to show AI answer, then expand "Sources Used"
@@ -53,30 +53,33 @@
 **🎤 Setup:**
 *"Now let me show you the real power - comparing across multiple protocol versions. This is where teams typically spend hours doing manual comparison."*
 
-**DEMO 1**: **"What biomarkers are measured in these studies?"**
+**DEMO 1**: **"What disease or tumor types are being studied?"**
 
 **ACTION**: Execute search, show AI synthesizing results
 
 **🎤 While results load:**
-*"The AI is now reading through hundreds of pages across three documents, extracting biomarker information, and synthesizing a comprehensive answer. This would take a clinical team hours of manual work."*
+*"The AI is now reading through hundreds of pages across three documents, identifying the target diseases and tumor types. This would take a clinical team time to manually compile."*
 
 **ACTION**: Show results with citations from multiple documents
 
 **🎤 Point out:**
-- Different document names in citations
-- Consistent coordinate format
-- AI finding related information across all three protocols
+- Different document names in citations (showing all 3 protocols)
+- Consistent coordinate format across documents
+- AI finding disease information from title pages and study designs
 
-**DEMO 2**: **"What are the safety monitoring requirements?"**
+**DEMO 2**: **"How is clinical response evaluated?"**
 
 **ACTION**: Execute search
 
 **🎤 Highlight:**
-*"Notice how it's pulling from different sections across documents - the AI understands semantic relationships. 'Safety monitoring' might be called 'adverse event tracking' or 'safety assessments' in different protocols, but the AI understands they're related."*
+*"Notice how it's finding the evaluation methodology - RECIST criteria, response definitions. The AI understands what 'response evaluation' means in a clinical context and finds the relevant methodology sections."*
 
 **ACTION**: Click through to show different source documents in citations
 
-**💡 Key Message:** One query, three documents, comprehensive answer - automatically
+**🎤 Point out:**
+*"Look - it found RECIST 1.1 criteria, complete response definitions, progressive disease criteria. This is exactly what a clinical operations team needs to know."*
+
+**💡 Key Message:** One query, three documents, comprehensive methodology - automatically
 
 ---
 
@@ -85,21 +88,21 @@
 **🎤 Transition:**
 *"Now let's focus on a specific protocol version."*
 
-**ACTION**: Select **Prot_000_Secukinumab.pdf** from sidebar dropdown
+**ACTION**: Select **Prot_000.pdf** from sidebar dropdown
 
-**DEMO**: **"What is the primary endpoint?"**
+**DEMO**: **"What is the NCT number and official study title?"**
 
 **🎤 Point out:**
-*"Now it's only searching this specific version. Notice the results are still precise, still coordinate-tracked, but scoped to exactly what you asked for."*
+*"Now it's only searching this specific protocol. Watch how precisely it finds the identifying information."*
 
-**ACTION**: Expand a citation to show bounding box coordinates
+**ACTION**: Wait for results, then expand a citation to show bounding box coordinates
 
 **🎤 Deep dive on one citation:**
 *"Let me show you what makes this regulatory-ready. This citation shows:"*
-- 📄 *"Document name: Prot_000_Secukinumab.pdf"*
-- 📍 *"Page 45, middle-left"*
+- 📄 *"Document name: Prot_000.pdf"*
+- 📍 *"Page 1, top-center"* (or wherever it appears)
 - 🎯 *"Exact coordinates: [x0, y0, x1, y1]"*
-- 📝 *"Source text preview for verification"*
+- 📝 *"Source text: NCT01714739"*
 
 *"You can feed these coordinates to downstream systems, create automated verification tools, or simply hand them to an auditor. The precision is there."*
 
@@ -182,7 +185,7 @@
 
 **[If no question from audience]:**
 
-**DEMO**: **"What biomarkers are measured in these studies?"**
+**DEMO**: **"What is the study phase and design?"**
 
 **THEN**: Switch models mid-demo
 
@@ -197,7 +200,7 @@
 - ✅ *Cost considerations*
 - ✅ *Specific model strengths*
 
-*"Claude 4 is our default for highest quality, but you have 10 models to choose from."*
+*"Claude 4 Sonnet gives the most detailed analysis. Llama 3.3 70B is faster and more cost-effective. You have 10 models to choose from based on your needs."*
 
 **💡 Key Message:** Flexible, configurable, customizable
 
@@ -230,29 +233,38 @@
 
 Use these if you need guaranteed good results:
 
-### **Cross-Document Queries:**
-1. "What are the dosing schedules?" ✅ TESTED
-2. "What biomarkers are measured in these studies?" ✅ TESTED
-3. "What is the ECOG performance status requirement?" ✅ TESTED
-4. "What prior therapies are allowed?" ✅ TESTED
+### **Cross-Document Queries (Search all 3 PDFs):**
+1. **"What is the dosing schedule for nivolumab?"** ✅ RECOMMENDED
+   - Returns: Nivolumab 3 mg/kg Q2W, Ipilimumab dosing
+2. **"What disease or tumor types are being studied?"** ✅ RECOMMENDED  
+   - Returns: Advanced Refractory Solid Tumors, SCCHN, Melanoma
+3. **"How is clinical response evaluated?"** ✅ RECOMMENDED
+   - Returns: RECIST 1.1 criteria, response definitions
+4. **"What is the study phase and design?"** ✅ GOOD
+   - Returns: Phase 1/2, cohort design, randomization
 
-### **Single-Document Queries:**
-(Select specific document first)
-1. "What is the treatment duration?"
-2. "What is the primary endpoint?"
-3. "Describe the study design"
-4. "What is the response evaluation criteria?"
+### **Single-Document Queries (Select specific PDF first):**
+1. **"What is the NCT number and official study title?"** ✅ RECOMMENDED
+   - Perfect for showing precision
+2. **"What is the protocol number and revision date?"** ✅ GOOD
+   - Concrete facts with clear citations
+3. **"Who is the study sponsor?"** ✅ GOOD
+   - Simple fact extraction
+4. **"What ECOG performance status is required?"** ✅ GOOD
+   - Specific eligibility criterion
 
-### **Complex Queries:**
-1. "What is the NCT number and study title?"
-2. "What is the phase of this study?"
-3. "Who is the sponsor?"
-4. "What disease is being studied?"
+### **Live Q&A Backup Queries:**
+1. "What is the IND number?"
+2. "What is lirilumab?"
+3. "How long is the treatment period?"
+4. "What are the primary objectives?"
 
 ### **⚠️ AVOID These (Fragmentation Issues):**
-- "Compare inclusion criteria across protocols" - Too fragmented
-- "What are the exclusion criteria?" - Headers without content
-- "Compare safety requirements" - Section headers only
+- ❌ "Compare inclusion criteria across protocols" - Headers separated from content
+- ❌ "What are the exclusion criteria?" - Too fragmented
+- ❌ "What biomarkers are measured?" - Not detailed in these protocols
+- ❌ "Compare safety requirements" - Section headers only
+- ❌ Any "list all" or "compare all" queries - Won't work well with current chunking
 
 ---
 
