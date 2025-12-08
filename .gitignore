@@ -1,8 +1,9 @@
-# PDF files (sample data - too large for git)
-*.pdf
+# Configuration (contains customer-specific values)
+config.py
 
-# macOS
-.DS_Store
+# PDF Files (can be large, customer-specific, potential licensing issues)
+*.pdf
+!sample_*.pdf  # Allow sample PDFs if prefixed with "sample_"
 
 # Python
 __pycache__/
@@ -10,19 +11,38 @@ __pycache__/
 *$py.class
 *.so
 .Python
+env/
 venv/
 ENV/
+.venv
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
 
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Snowflake
-.snowflake/
+# OS
+.DS_Store
+Thumbs.db
 
+# Snowflake
+snowflake_connection.json
+credentials.json
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Customer-specific data
+customer_data/
+uploads/
