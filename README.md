@@ -26,42 +26,96 @@
 
 ![Search Interface](docs/screenshot-search.png)
 
-### Cross-Document Intelligence
-*Search across hundreds of protocols simultaneously*
-
-![Multi-Doc Search](docs/screenshot-multi-doc.png)
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
 ### Prerequisites
-- Snowflake Enterprise Edition or higher
-- Cortex Search & Cortex AI enabled
-- Streamlit in Snowflake enabled
-- ACCOUNTADMIN role (for initial setup)
+- Snowflake account with Cortex Search & Cortex AI enabled
+- ACCOUNTADMIN role access (or sufficient privileges to create schemas, functions, and services)
 
-### 5-Minute Setup
+### 3-Step Setup
 
-```bash
-# 1. Clone this repository
-git clone https://github.com/Snowflake-Labs/clinical-protocol-intelligence.git
-cd clinical-protocol-intelligence
+#### Step 1: Update Database & Schema Names
 
-# 2. Update database/schema names
-# Edit setup.sql lines 27, 31-32
-# Edit streamlit_app.py lines 42-43
-
-# 3. Run setup in Snowflake
-# Execute setup.sql in Snowsight or SnowSQL
-
-# 4. Deploy Streamlit app
-# Copy streamlit_app.py to Streamlit in Snowflake
-
-# 5. Upload PDFs and start searching!
+**In `setup.sql` (lines 27, 31-32):**
+```sql
+-- Change to your values:
+CREATE SCHEMA IF NOT EXISTS YOUR_DATABASE.YOUR_SCHEMA;
+USE DATABASE YOUR_DATABASE;
+USE SCHEMA YOUR_SCHEMA;
 ```
 
-**📖 Detailed Instructions**: See [DEPLOYMENT.md](DEPLOYMENT.md)
+**In `streamlit_app.py` (lines 42-43):**
+```python
+# Change to your values:
+DATABASE_NAME = "YOUR_DATABASE"
+SCHEMA_NAME = "YOUR_SCHEMA"
+```
+
+#### Step 2: Run Database Setup
+
+Execute `setup.sql` in Snowsight or SnowSQL.
+
+This creates:
+- Stage for PDF storage (`@PDF_STAGE`)
+- Python UDF for text extraction (`pdf_txt_mapper_v3`)
+- Table for document chunks (`document_chunks`)
+- Cortex Search service (`protocol_search`)
+- Stored procedure for automation (`process_new_pdfs()`)
+
+**Verify:**
+```sql
+SHOW STAGES LIKE 'PDF_STAGE';
+SHOW FUNCTIONS LIKE 'pdf_txt_mapper_v3';
+SHOW CORTEX SEARCH SERVICES LIKE 'protocol_search';
+```
+
+#### Step 3: Deploy Streamlit App
+
+1. In Snowsight, go to **Streamlit** → **+ Streamlit App**
+2. Name it (e.g., `Clinical_Protocol_Intelligence`)
+3. Select your warehouse, database, and schema
+4. Paste contents of `streamlit_app.py`
+5. Click **Run**
+
+**Done!** 🎉
+
+---
+
+### Usage
+
+**Upload PDFs:**
+- Via Streamlit app (sidebar file uploader), or
+- Via Snowsight: Data → Your Schema → PDF_STAGE → Upload Files
+
+**Process PDFs:**
+```sql
+CALL process_new_pdfs();
+```
+
+**Start Searching:**
+Open your Streamlit app and ask questions like:
+- "What is the dosing schedule for nivolumab?"
+- "What disease or tumor types are being studied?"
+- "How is clinical response evaluated?"
+
+---
+
+### Optional: Access Control
+
+```sql
+-- Create read-only role for end users
+CREATE ROLE PDF_VIEWER;
+GRANT USAGE ON DATABASE YOUR_DATABASE TO ROLE PDF_VIEWER;
+GRANT USAGE ON SCHEMA YOUR_SCHEMA TO ROLE PDF_VIEWER;
+GRANT SELECT ON ALL TABLES IN SCHEMA YOUR_SCHEMA TO ROLE PDF_VIEWER;
+GRANT USAGE ON STREAMLIT YOUR_SCHEMA.YOUR_APP_NAME TO ROLE PDF_VIEWER;
+
+-- Assign to users
+GRANT ROLE PDF_VIEWER TO USER username;
+```
 
 ---
 
@@ -125,15 +179,6 @@ cd clinical-protocol-intelligence
 | `setup.sql` | Database setup script (stages, tables, UDFs, search service) |
 | `streamlit_app.py` | Main application (Streamlit in Snowflake) |
 
-### Documentation
-
-| File | Purpose |
-|------|---------|
-| `README.md` | This file - project overview |
-| `DEPLOYMENT.md` | Step-by-step deployment guide |
-| `DEMO-GUIDE.md` | 15-minute demo presentation script |
-| `QUICKSTART.md` | Fast setup for experienced users |
-| `SAMPLE_DATA.md` | Where to get test PDFs |
 
 ---
 
@@ -251,37 +296,27 @@ cd clinical-protocol-intelligence
 
 ---
 
-## 🤝 Contributing
+## 🆘 Troubleshooting
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+**Search returns no results?**
+```sql
+-- Refresh the search index
+ALTER CORTEX SEARCH SERVICE YOUR_SCHEMA.protocol_search REFRESH;
+```
 
-### Reporting Issues
-- **Bug reports**: Use GitHub Issues with detailed description
-- **Feature requests**: Describe use case and expected behavior
-- **Security issues**: Email security@snowflake.com (do not use GitHub)
+**PDF processing fails?**
+```sql
+-- Check for errors in query history
+SELECT query_text, error_message 
+FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY())
+WHERE query_text ILIKE '%process_new_pdfs%'
+ORDER BY start_time DESC LIMIT 5;
+```
 
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
-
-**Copyright (c) 2025 Snowflake Inc.**
-
----
-
-## 🆘 Support
-
-### Getting Help
-1. **Documentation**: Check [DEPLOYMENT.md](DEPLOYMENT.md) first
-2. **Snowflake Support**: support.snowflake.com (for account-specific issues)
-3. **Community**: community.snowflake.com
-4. **GitHub Issues**: For bugs and feature requests
-
-### Professional Services
-For enterprise deployments, custom integrations, or training:
+**Questions?**
+- Open a GitHub Issue
 - Contact your Snowflake account team
-- Email: professional-services@snowflake.com
+- Visit [community.snowflake.com](https://community.snowflake.com)
 
 ---
 
