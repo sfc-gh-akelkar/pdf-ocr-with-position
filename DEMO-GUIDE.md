@@ -28,7 +28,7 @@
 **🎤 Transition:**
 *"Watch this. I'm going to ask a complex question across all three protocols."*
 
-**DEMO**: Type: **"What is the dosing schedule for nivolumab?"**
+**DEMO**: Type: **"What is the dosing schedule for nivolumab and Ligelizumab??"**
 - ⏱️ Wait for AI answer to appear (~3-5 seconds)
 - **Don't talk while it's processing** - let the speed impress them
 
