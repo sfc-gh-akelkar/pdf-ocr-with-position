@@ -334,11 +334,10 @@ Should return JSON with relevant chunks containing "dosing schedule" information
 
 ### Configure the App
 
-1. Copy `config.example.py` to `config.py`
-2. Edit `config.py`:
+Edit `streamlit_app.py` lines 42-43:
 ```python
-DATABASE_NAME = "YOUR_DATABASE"
-SCHEMA_NAME = "YOUR_SCHEMA"
+DATABASE_NAME = "YOUR_DATABASE"  # Match what you used in setup.sql
+SCHEMA_NAME = "YOUR_SCHEMA"      # Match what you used in setup.sql
 ```
 
 ### Deploy via Snowsight

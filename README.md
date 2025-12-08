@@ -48,9 +48,9 @@
 git clone https://github.com/Snowflake-Labs/clinical-protocol-intelligence.git
 cd clinical-protocol-intelligence
 
-# 2. Configure your environment
-cp config.example.py config.py
-# Edit config.py with your database/schema names
+# 2. Update database/schema names
+# Edit setup.sql lines 27, 31-32
+# Edit streamlit_app.py lines 42-43
 
 # 3. Run setup in Snowflake
 # Execute setup.sql in Snowsight or SnowSQL
@@ -124,7 +124,6 @@ cp config.example.py config.py
 |------|-------------|
 | `setup.sql` | Database setup script (stages, tables, UDFs, search service) |
 | `streamlit_app.py` | Main application (Streamlit in Snowflake) |
-| `config.example.py` | Configuration template |
 
 ### Documentation
 

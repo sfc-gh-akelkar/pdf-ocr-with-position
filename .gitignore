@@ -1,6 +1,3 @@
-# Configuration (contains customer-specific values)
-config.py
-
 # PDF Files (can be large, customer-specific, potential licensing issues)
 *.pdf
 !sample_*.pdf  # Allow sample PDFs if prefixed with "sample_"
